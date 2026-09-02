@@ -14,7 +14,7 @@ const EmployeeHomePage = () => {
 
   return (
     <div className="flex h-screen bg-[#0f172a] text-sm font-medium">
-      {/* Sidebar */}
+      {/* Sidebar laslhs */}
       <div className="flex w-72 flex-col border-r border-slate-800 bg-[#0f172a]">
         {/* Logo Area */}
         <div className="flex h-16 shrink-0 items-center px-6">
