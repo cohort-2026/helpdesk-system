@@ -1,12 +1,12 @@
-import { useState } from "react";
-import "./App.css";
-import EmployeeHomePage from "./pages/employee/EmployeeHomePage";
+import './App.css';
+import { AuthProvider } from './context/AuthContext';
+import AppRouter from './routes/AppRouter';
 
 function App() {
   return (
-    <>
-      <EmployeeHomePage />
-    </>
+    <AuthProvider>
+      <AppRouter />
+    </AuthProvider>
   );
 }
 
