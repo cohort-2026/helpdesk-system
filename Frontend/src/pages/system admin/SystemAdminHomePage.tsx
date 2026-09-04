@@ -19,13 +19,13 @@ const SystemAdminHomePage = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-[#0f172a] text-sm font-medium">
+    <div className="flex h-screen bg-background text-sm font-medium text-body-text">
       {/* Sidebar */}
-      <div className="flex w-72 flex-col border-r border-slate-800 bg-[#0f172a]">
+      <div className="flex w-72 flex-col border-r border-secondary/20 bg-background">
         {/* Logo Area */}
         <div className="flex h-16 shrink-0 items-center px-6">
           <svg
-            className="h-8 w-8 text-indigo-500"
+            className="h-8 w-8 text-primary"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -34,7 +34,7 @@ const SystemAdminHomePage = () => {
               opacity="0.8"
             />
           </svg>
-          <span className="text-white text-sm font-semibold leading-6">
+          <span className="text-body-text text-sm font-semibold leading-6">
             Helpdesk System
           </span>
         </div>
@@ -51,15 +51,15 @@ const SystemAdminHomePage = () => {
                         href={item.href}
                         className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
                           item.current
-                            ? "bg-slate-800 text-white"
-                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                            ? "bg-accent/30 text-primary"
+                            : "text-body-text/70 hover:bg-accent/20 hover:text-primary"
                         }`}
                       >
                         <item.icon
                           className={`h-6 w-6 shrink-0 ${
                             item.current
-                              ? "text-white"
-                              : "text-slate-400 group-hover:text-white"
+                              ? "text-primary"
+                              : "text-body-text/60 group-hover:text-primary"
                           }`}
                         />
                         {item.name}
@@ -76,17 +76,17 @@ const SystemAdminHomePage = () => {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col">
         {/* Top Header */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-[#0f172a] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-secondary/20 bg-background px-4 sm:px-6 lg:px-8">
           {/* Search Bar */}
           <div className="flex flex-1 items-center gap-x-4 self-stretch lg:gap-x-6">
             <form className="relative flex flex-1" action="#" method="GET">
               <label htmlFor="search-field" className="sr-only">
                 Search
               </label>
-              <IoSearch className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-slate-500" />
+              <IoSearch className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-body-text/50" />
               <input
                 id="search-field"
-                className="block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 text-white focus:ring-0 sm:text-sm placeholder:text-slate-500 outline-none"
+                className="block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 text-body-text focus:ring-0 sm:text-sm placeholder:text-body-text/50 outline-none"
                 placeholder="Search"
                 type="search"
                 name="search"
@@ -97,14 +97,14 @@ const SystemAdminHomePage = () => {
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <button
                 type="button"
-                className="-m-2.5 p-2.5 text-slate-400 hover:text-slate-300"
+                className="-m-2.5 p-2.5 text-body-text/60 hover:text-primary"
               >
                 <span className="sr-only">View notifications</span>
                 <IoNotificationsOutline className="h-6 w-6" />
               </button>
 
               <div
-                className="hidden lg:block lg:h-6 lg:w-px lg:bg-slate-800"
+                className="hidden lg:block lg:h-6 lg:w-px lg:bg-secondary/20"
                 aria-hidden="true"
               />
 
@@ -115,18 +115,18 @@ const SystemAdminHomePage = () => {
                   className="flex items-center gap-x-3 p-1.5 outline-none"
                 >
                   <img
-                    className="h-8 w-8 rounded-full bg-slate-800"
+                    className="h-8 w-8 rounded-full bg-secondary/30"
                     src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                     alt="Tom Cook"
                   />
                   <span className="hidden lg:flex lg:items-center">
                     <span
-                      className="text-sm font-semibold leading-6 text-white"
+                      className="text-sm font-semibold leading-6 text-body-text"
                       aria-hidden="true"
                     >
-                      Tom Cook
+                      John Doe
                     </span>
-                    <IoChevronDownOutline className="ml-2 h-5 w-5 text-slate-400" />
+                    <IoChevronDownOutline className="ml-2 h-5 w-5 text-body-text/60" />
                   </span>
                 </button>
               </div>
@@ -135,8 +135,8 @@ const SystemAdminHomePage = () => {
         </div>
 
         {/* Dashboard Main Content / Placeholder */}
-        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="h-full rounded-xl border-2 border-dashed border-slate-700/50 bg-[#0f172a] opacity-50">
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">
+          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5">
             {/* Pattern overlay for the striped dash effect in the design */}
           </div>
         </main>
