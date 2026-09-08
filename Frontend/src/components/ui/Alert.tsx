@@ -3,14 +3,14 @@ import React from 'react';
 export interface AlertProps {
   variant?: 'info' | 'success' | 'warning' | 'error';
   title?: string;
-  children: React.ReactNode;
+  description?: string;
   className?: string;
   icon?: React.ReactNode;
 }
 
-export const Alert: React.FC<AlertProps> = ({ variant = 'info', title, children, className = '', icon }) => {
+export const Alert: React.FC<AlertProps> = ({ variant = 'info', title, description, className = '', icon }) => {
   const variants = {
-    info: 'bg-blue-50 text-blue-800 border-blue-200',
+    info: 'bg-accent/30 text-primary border-secondary/50',
     success: 'bg-green-50 text-green-800 border-green-200',
     warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
     error: 'bg-red-50 text-red-800 border-red-200',
@@ -47,7 +47,7 @@ export const Alert: React.FC<AlertProps> = ({ variant = 'info', title, children,
       <div>
         {title && <h3 className="text-sm font-semibold mb-1">{title}</h3>}
         <div className="text-sm opacity-90">
-          {children}
+          {description}
         </div>
       </div>
     </div>
