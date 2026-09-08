@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #ffffff;
+  --color-primary: #6A89A7;
+  --color-secondary: #88BDF2;
+  --color-accent: #BDDDFC;
+  --color-body-text: #384959;
+  --font-sans: "Be Vietnam Pro", sans-serif;
+}
+
+body {
+  @apply bg-background text-body-text font-sans;
+}
