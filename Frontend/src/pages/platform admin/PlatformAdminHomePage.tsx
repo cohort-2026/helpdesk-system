@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { IoHomeOutline } from "react-icons/io5";
 import { IoPersonAddOutline } from "react-icons/io5";
+import { Outlet, useLocation } from "react-router-dom";
 import TopHeader from "../../components/ui/TopHeader";
 import SideBar from "../../components/ui/SideBar";
 import LogoArea from "../../components/ui/LogoArea";
 
 const PlatformAdminHomePage = () => {
-
-  const [selectedPage, setSelectedPage] = useState<string>("Dashboard");
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "#", current: true, icon: IoHomeOutline },
-    { name: "Users", href: "#", current: false, icon: IoPersonAddOutline },
+    { name: "Dashboard", href: "/platform-admin", current: location.pathname === "/platform-admin", icon: IoHomeOutline },
+    { name: "Users", href: "/platform-admin/users", current: location.pathname === "/platform-admin/users", icon: IoPersonAddOutline },
   ];
 
   return (
@@ -31,7 +31,7 @@ const PlatformAdminHomePage = () => {
         <LogoArea />
 
         {/* Sidebar Navigation */}
-        <SideBar navigation={navigation} setSelectedPage={setSelectedPage} closeSidebar={() => setIsSidebarOpen(false)}/>
+        <SideBar navigation={navigation} closeSidebar={() => setIsSidebarOpen(false)}/>
       </div>
 
       {/* Main Content Area */}
@@ -41,8 +41,8 @@ const PlatformAdminHomePage = () => {
 
         {/* Dashboard Main Content */}
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">
-          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4">
-            <h5>{selectedPage}</h5>
+          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4 overflow-y-auto">
+            <Outlet />
           </div>
         </main>
       </div>

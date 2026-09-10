@@ -1,16 +1,13 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
-// Pages
 import SignInPage from '../pages/Auth pages/SignInPage';
 import EmployeeHomePage from '../pages/employee/EmployeeHomePage';
 import AgentHomePage from '../pages/agent/AgentHomePage';
 import DepartmentLeadHomePage from '../pages/department lead/DepartmentLeadHomePage';
 import SystemAdminHomePage from '../pages/system admin/SystemAdminHomePage';
 import PlatformAdminHomePage from '../pages/platform admin/PlatformAdminHomePage';
-
-// Components
 import ProtectedRoute from '../components/ProtectedRoute';
+import EmployeeSubmitRequest from '../pages/employee/EmployeeSubmitRequest';
+import EmployeeDashboard from '../pages/employee/EmployeeDashboard';
 
 const AppRouter = () => {
   return (
@@ -21,12 +18,21 @@ const AppRouter = () => {
 
         {/* Protected Employee Routes */}
         <Route element={<ProtectedRoute allowedRoles={['employee']} />}>
-          <Route path="/employee" element={<EmployeeHomePage />} />
+          <Route path="/employee" element={<EmployeeHomePage />}>
+            <Route index element={<EmployeeDashboard />} />
+            <Route path="my-requests" element={<EmployeeDashboard />} />
+            <Route path="submit-request" element={<EmployeeSubmitRequest />} />
+          </Route>
         </Route>
 
         {/* Protected Agent Routes */}
         <Route element={<ProtectedRoute allowedRoles={['agent']} />}>
-          <Route path="/agent" element={<AgentHomePage />} />
+          <Route path="/agent" element={<AgentHomePage />}>
+            {/* Child routes for agent can be added here similar to employee, for now we will just render AgentHomePage's layout */}
+            <Route path="ticket-queue" element={<div className="p-4">Ticket Queue</div>} />
+            <Route path="assigned-tickets" element={<div className="p-4">Assigned Tickets</div>} />
+            <Route path="resolved-tickets" element={<div className="p-4">Resolved Tickets</div>} />
+          </Route>
         </Route>
 
         {/* Protected Department Lead Routes */}

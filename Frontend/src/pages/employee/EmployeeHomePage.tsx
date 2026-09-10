@@ -1,21 +1,21 @@
 import { IoHomeOutline } from "react-icons/io5";
 import { TbCheckupList } from "react-icons/tb";
+import { Outlet, useLocation } from "react-router-dom";
 import SideBar from "../../components/ui/SideBar";
 import LogoArea from "../../components/ui/LogoArea";
 import TopHeader from "../../components/ui/TopHeader";
 import { useState } from "react";
 
 const EmployeeHomePage = () => {
-
-  const [selectedPage, setSelectedPage] = useState<string>("My requests");
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigation = [
-    { name: "My requests", href: "#", current: true, icon: IoHomeOutline },
+    { name: "My requests", href: "/employee/my-requests", current: location.pathname === "/employee" || location.pathname === "/employee/my-requests", icon: IoHomeOutline },
     {
       name: "Submit request",
-      href: "#",
-      current: false,
+      href: "/employee/submit-request",
+      current: location.pathname === "/employee/submit-request",
       icon: TbCheckupList,
     },
   ];
@@ -36,7 +36,7 @@ const EmployeeHomePage = () => {
         <LogoArea />
 
         {/* Sidebar Navigation */}
-        <SideBar navigation={navigation} setSelectedPage={setSelectedPage} closeSidebar={() => setIsSidebarOpen(false)} />
+        <SideBar navigation={navigation} closeSidebar={() => setIsSidebarOpen(false)} />
       </div>
 
       {/* Main Content Area */}
@@ -46,8 +46,8 @@ const EmployeeHomePage = () => {
 
         {/* Dashboard Main Content */}
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">
-          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4">
-            <h5>{selectedPage}</h5>
+          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4 overflow-y-auto">
+           <Outlet />
           </div>
         </main>
       </div>

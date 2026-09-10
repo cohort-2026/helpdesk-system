@@ -3,34 +3,33 @@ import { IoHomeOutline } from "react-icons/io5";
 import { MdOutlineAssignmentInd } from "react-icons/md";
 import { MdOutlineAssignmentTurnedIn } from "react-icons/md";
 import { HiOutlineQueueList } from "react-icons/hi2";
+import { Outlet, useLocation } from "react-router-dom";
 import LogoArea from "../../components/ui/LogoArea";
 import SideBar from "../../components/ui/SideBar";
 import TopHeader from "../../components/ui/TopHeader";
 
 const AgentHomePage = () => {
-
-    const [selectedPage, setSelectedPage] = useState<string>("Dashboard");
+    const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-
   const navigation = [
-    { name: "Dashboard", href: "#", current: true, icon: IoHomeOutline },
+    { name: "Dashboard", href: "/agent", current: location.pathname === "/agent", icon: IoHomeOutline },
     {
       name: "Ticket queue",
-      href: "#",
-      current: false,
+      href: "/agent/ticket-queue",
+      current: location.pathname === "/agent/ticket-queue",
       icon: HiOutlineQueueList,
     },
     {
       name: "Assigned tickets",
-      href: "#",
-      current: false,
+      href: "/agent/assigned-tickets",
+      current: location.pathname === "/agent/assigned-tickets",
       icon: MdOutlineAssignmentInd,
     },
     {
       name: "Resolved tickets",
-      href: "#",
-      current: false,
+      href: "/agent/resolved-tickets",
+      current: location.pathname === "/agent/resolved-tickets",
       icon: MdOutlineAssignmentTurnedIn,
     },
   ];
@@ -51,7 +50,7 @@ const AgentHomePage = () => {
         <LogoArea />
 
         {/* Sidebar Navigation */}
-        <SideBar navigation={navigation} setSelectedPage={setSelectedPage} closeSidebar={() => setIsSidebarOpen(false)}/>
+        <SideBar navigation={navigation} closeSidebar={() => setIsSidebarOpen(false)}/>
       </div>
 
       {/* Main Content Area */}
@@ -61,8 +60,8 @@ const AgentHomePage = () => {
 
         {/* Dashboard Main Content */}
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">
-          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4">
-            <h5>{selectedPage}</h5>
+          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4 overflow-y-auto">
+            <Outlet />
           </div>
         </main>
       </div>

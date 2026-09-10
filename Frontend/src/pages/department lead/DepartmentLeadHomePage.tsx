@@ -4,39 +4,39 @@ import { HiOutlineQueueList } from "react-icons/hi2";
 import { MdOutlineApproval } from "react-icons/md";
 import { AiOutlineTeam } from "react-icons/ai";
 import { HiOutlineDocumentReport } from "react-icons/hi";
+import { Outlet, useLocation } from "react-router-dom";
 import LogoArea from "../../components/ui/LogoArea";
 import SideBar from "../../components/ui/SideBar";
 import TopHeader from "../../components/ui/TopHeader";
 
 const DepartmentLeadHomePage = () => {
-
-  const [selectedPage, setSelectedPage] = useState<string>("Dashboard");
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "#", current: true, icon: IoHomeOutline },
+    { name: "Dashboard", href: "/department-lead", current: location.pathname === "/department-lead", icon: IoHomeOutline },
     {
       name: "Ticket queue",
-      href: "#",
-      current: false,
+      href: "/department-lead/ticket-queue",
+      current: location.pathname === "/department-lead/ticket-queue",
       icon: HiOutlineQueueList,
     },
     {
       name: "Approvals",
-      href: "#",
-      current: false,
+      href: "/department-lead/approvals",
+      current: location.pathname === "/department-lead/approvals",
       icon: MdOutlineApproval,
     },
     {
       name: "Team & Agents",
-      href: "#",
-      current: false,
+      href: "/department-lead/team",
+      current: location.pathname === "/department-lead/team",
       icon: AiOutlineTeam,
     },
     {
       name: "Reports",
-      href: "#",
-      current: false,
+      href: "/department-lead/reports",
+      current: location.pathname === "/department-lead/reports",
       icon: HiOutlineDocumentReport,
     },
   ];
@@ -57,7 +57,7 @@ const DepartmentLeadHomePage = () => {
         <LogoArea />
 
         {/* Sidebar Navigation */}
-        <SideBar navigation={navigation} setSelectedPage={setSelectedPage} closeSidebar={() => setIsSidebarOpen(false)}/>
+        <SideBar navigation={navigation} closeSidebar={() => setIsSidebarOpen(false)}/>
       </div>
 
       {/* Main Content Area */}
@@ -67,8 +67,8 @@ const DepartmentLeadHomePage = () => {
 
         {/* Dashboard Main Content */}
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">
-          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4">
-            <h5>{selectedPage}</h5>
+          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4 overflow-y-auto">
+            <Outlet />
           </div>
         </main>
       </div>

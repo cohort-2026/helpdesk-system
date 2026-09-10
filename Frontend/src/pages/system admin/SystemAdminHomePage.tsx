@@ -3,24 +3,25 @@ import { IoHomeOutline } from "react-icons/io5";
 import { IoPersonAddOutline } from "react-icons/io5";
 import { LuBuilding } from "react-icons/lu";
 import { HiOutlineDocumentReport } from "react-icons/hi";
+import { Outlet, useLocation } from "react-router-dom";
 import TopHeader from "../../components/ui/TopHeader";
 import SideBar from "../../components/ui/SideBar";
 import LogoArea from "../../components/ui/LogoArea";
 
 const SystemAdminHomePage = () => {
-  const [selectedPage, setSelectedPage] = useState<string>("Dashboard");
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const navigation = [
-    { name: "Dashboard", href: "#", current: true, icon: IoHomeOutline },
-    { name: "Users", href: "#", current: false, icon: IoPersonAddOutline },
+    { name: "Dashboard", href: "/system-admin", current: location.pathname === "/system-admin", icon: IoHomeOutline },
+    { name: "Users", href: "/system-admin/users", current: location.pathname === "/system-admin/users", icon: IoPersonAddOutline },
     {
       name: "Departments",
-      href: "#",
-      current: false,
+      href: "/system-admin/departments",
+      current: location.pathname === "/system-admin/departments",
       icon: LuBuilding,
     },
-    { name: "Reports", href: "#", current: false, icon: HiOutlineDocumentReport },
+    { name: "Reports", href: "/system-admin/reports", current: location.pathname === "/system-admin/reports", icon: HiOutlineDocumentReport },
   ];
 
   return (
@@ -39,7 +40,7 @@ const SystemAdminHomePage = () => {
         <LogoArea />
 
         {/* Sidebar Navigation */}
-        <SideBar navigation={navigation} setSelectedPage={setSelectedPage} closeSidebar={() => setIsSidebarOpen(false)}/>
+        <SideBar navigation={navigation} closeSidebar={() => setIsSidebarOpen(false)}/>
       </div>
 
       {/* Main Content Area */}
@@ -49,8 +50,8 @@ const SystemAdminHomePage = () => {
 
         {/* Dashboard Main Content */}
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">
-          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4">
-            <h5>{selectedPage}</h5>
+          <div className="h-full rounded-xl border-2 border-dashed border-secondary/30 bg-accent/5 p-4 overflow-y-auto">
+            <Outlet />
           </div>
         </main>
       </div>
