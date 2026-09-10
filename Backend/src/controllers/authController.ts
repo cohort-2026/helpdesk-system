@@ -3,6 +3,8 @@ import * as userServices from "../services/userService";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+const jwtSecret = "secret";
+
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     const {name, surname, email, password, role, department_id} = req.body
     if(!name || !surname || !email || !password || !role) {
@@ -55,5 +57,33 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         res.status(200).json({token, user: userWithoutPassword})
     } catch (error) {
         next(error)
+    }
+}
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.status(200).json({message: "Logged out successfully"})
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const me = async (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if(!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({message: "Not authenticated"})
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { id: string; email: string; role: string };
+        const user = await userServices.findUserByEmail(decoded.email);
+        if(!user) {
+            return res.status(401).json({message: "Not authenticated"})
+        }
+        const { password: _, ...userWithoutPassword } = user;
+        res.status(200).json({user: userWithoutPassword})
+    } catch (error) {
+        return res.status(401).json({message: "Not authenticated"})
     }
 }
