@@ -1,10 +1,18 @@
 import React from 'react'
-import { IoChevronDownOutline, IoNotificationsOutline, IoSearch } from 'react-icons/io5'
+import { IoChevronDownOutline, IoNotificationsOutline, IoSearch, IoMenuOutline } from 'react-icons/io5'
 import { Input } from './Input'
 
-const TopHeader = () => {
+const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   return (
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-secondary/20 bg-background px-4 sm:px-6 lg:px-8">
+          <button
+            type="button"
+            className="-m-2.5 p-2.5 text-body-text/60 hover:text-primary md:hidden mr-4"
+            onClick={onMenuClick}
+          >
+            <span className="sr-only">Open sidebar</span>
+            <IoMenuOutline className="h-6 w-6" />
+          </button>
           {/* Search Bar */}
           <div className="flex flex-1 items-center gap-x-4 self-stretch lg:gap-x-6">
             <form className="relative flex flex-1" action="#" method="GET">

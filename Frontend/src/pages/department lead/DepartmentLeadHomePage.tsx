@@ -11,6 +11,7 @@ import TopHeader from "../../components/ui/TopHeader";
 const DepartmentLeadHomePage = () => {
 
   const [selectedPage, setSelectedPage] = useState<string>("Dashboard");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigation = [
     { name: "Dashboard", href: "#", current: true, icon: IoHomeOutline },
@@ -41,20 +42,28 @@ const DepartmentLeadHomePage = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-background text-sm font-medium text-body-text">
+    <div className="flex h-screen bg-background text-sm font-medium text-body-text relative">
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-body-text/20 md:hidden" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar laslhs */}
-      <div className="flex w-72 flex-col border-r border-secondary/20 bg-background">
+      <div className={`fixed inset-y-0 left-0 z-50 flex w-62 flex-col border-r border-secondary/20 bg-background transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo Area */}
         <LogoArea />
 
         {/* Sidebar Navigation */}
-        <SideBar navigation={navigation} setSelectedPage={setSelectedPage}/>
+        <SideBar navigation={navigation} setSelectedPage={setSelectedPage} closeSidebar={() => setIsSidebarOpen(false)}/>
       </div>
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col">
         {/* Top Header */}
-          <TopHeader/>
+          <TopHeader onMenuClick={() => setIsSidebarOpen(true)}/>
 
         {/* Dashboard Main Content */}
         <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 bg-background">

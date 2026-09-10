@@ -7,7 +7,7 @@ type NavigationItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-const SideBar = ({navigation, setSelectedPage}: {navigation: NavigationItem[], setSelectedPage: React.Dispatch<React.SetStateAction<string>>}) => {
+const SideBar = ({navigation, setSelectedPage, closeSidebar}: {navigation: NavigationItem[], setSelectedPage: React.Dispatch<React.SetStateAction<string>>, closeSidebar?: () => void}) => {
   return (
     <div className="flex flex-1 flex-col overflow-y-auto px-4 py-8">
       <nav className="flex flex-1 flex-col">
@@ -23,7 +23,10 @@ const SideBar = ({navigation, setSelectedPage}: {navigation: NavigationItem[], s
                         ? "bg-accent/30 text-primary"
                         : "text-body-text/70 hover:bg-accent/20 hover:text-primary"
                     }`}
-                    onClick={() => setSelectedPage(item.name)}
+                    onClick={() => {
+                      setSelectedPage(item.name);
+                      if (closeSidebar) closeSidebar();
+                    }}
                   >
                     <item.icon
                       className={`h-6 w-6 shrink-0 ${
