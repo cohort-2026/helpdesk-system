@@ -10,7 +10,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated || !user) {
-    // If not authenticated, redirect to sign-in page
     return <Navigate to="/" replace />;
   }
 
@@ -18,22 +17,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     // If user's role is not in the allowedRoles list, redirect to their specific home page
     // (We could also redirect to an "Unauthorized" page, but for now we'll route them back home)
     switch (user.role) {
-      case 'employee':
+      case 'Employee':
         return <Navigate to="/employee" replace />;
-      case 'agent':
+      case 'Agent':
         return <Navigate to="/agent" replace />;
-      case 'department lead':
+      case 'Department Lead':
         return <Navigate to="/department-lead" replace />;
-      case 'system admin':
+      case 'System Admin':
         return <Navigate to="/system-admin" replace />;
-      case 'platform admin':
+      case 'Platform Admin':
         return <Navigate to="/platform-admin" replace />;
       default:
         return <Navigate to="/" replace />;
     }
   }
 
-  // If authenticated and authorized, render the child routes
   return <Outlet />;
 };
 

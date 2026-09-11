@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import * as userServices from "../services/userService";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import next from "next/dist/server/next";
 
 const COOKIE_NAME = "session";
 const COOKIE_OPTIONS = {

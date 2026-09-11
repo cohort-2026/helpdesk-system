@@ -17,7 +17,7 @@ const AppRouter = () => {
         <Route path="/" element={<SignInPage />} />
 
         {/* Protected Employee Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['employee']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['Employee']} />}>
           <Route path="/employee" element={<EmployeeHomePage />}>
             <Route index element={<EmployeeDashboard />} />
             <Route path="my-requests" element={<EmployeeDashboard />} />
@@ -26,9 +26,8 @@ const AppRouter = () => {
         </Route>
 
         {/* Protected Agent Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['agent']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['Agent']} />}>
           <Route path="/agent" element={<AgentHomePage />}>
-            {/* Child routes for agent can be added here similar to employee, for now we will just render AgentHomePage's layout */}
             <Route path="ticket-queue" element={<div className="p-4">Ticket Queue</div>} />
             <Route path="assigned-tickets" element={<div className="p-4">Assigned Tickets</div>} />
             <Route path="resolved-tickets" element={<div className="p-4">Resolved Tickets</div>} />
@@ -36,17 +35,17 @@ const AppRouter = () => {
         </Route>
 
         {/* Protected Department Lead Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['department lead']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['Department Lead']} />}>
           <Route path="/department-lead" element={<DepartmentLeadHomePage />} />
         </Route>
 
         {/* Protected System Admin Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['system admin']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['System Admin']} />}>
           <Route path="/system-admin" element={<SystemAdminHomePage />} />
         </Route>
 
         {/* Protected Platform Admin Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['platform admin']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['Platform Admin']} />}>
           <Route path="/platform-admin" element={<PlatformAdminHomePage />} />
         </Route>
 

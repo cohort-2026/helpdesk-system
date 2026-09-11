@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, type ReactNode } from 'react'; 
 
 // Define the role types
-export type Role = 'employee' | 'agent' | 'department lead' | 'system admin' | 'platform admin' | null;
+export type Role = 'Employee' | 'Agent' | 'Department Lead' | 'System Admin' | 'Platform Admin' | null;
 
 // Define the User shape
 export interface User {
@@ -10,7 +10,6 @@ export interface User {
   role: Role;
 }
 
-// Define the AuthContext state shape
 interface AuthContextState {
   isAuthenticated: boolean;
   user: User | null;
