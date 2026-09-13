@@ -8,6 +8,14 @@ import PlatformAdminHomePage from '../pages/platform admin/PlatformAdminHomePage
 import ProtectedRoute from '../components/ProtectedRoute';
 import EmployeeSubmitRequest from '../pages/employee/EmployeeSubmitRequest';
 import EmployeeDashboard from '../pages/employee/EmployeeDashboard';
+import TicketQueue from '../pages/agent/TicketQueue';
+import AssignedTickets from '../pages/agent/AssignedTickets';
+import ResolvedTickets from '../pages/agent/ResolvedTickets';
+import Reports from '../pages/department lead/Reports';
+import TeamAgents from '../pages/department lead/TeamAgents';
+import Approvals from '../pages/department lead/Approvals';
+import Users from '../pages/system admin/Users';
+import Departments from '../pages/system admin/Departments';
 
 const AppRouter = () => {
   return (
@@ -28,25 +36,36 @@ const AppRouter = () => {
         {/* Protected Agent Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Agent']} />}>
           <Route path="/agent" element={<AgentHomePage />}>
-            <Route path="ticket-queue" element={<div className="p-4">Ticket Queue</div>} />
-            <Route path="assigned-tickets" element={<div className="p-4">Assigned Tickets</div>} />
-            <Route path="resolved-tickets" element={<div className="p-4">Resolved Tickets</div>} />
+            <Route path="ticket-queue" element={<TicketQueue />} />
+            <Route path="assigned-tickets" element={<AssignedTickets />} />
+            <Route path="resolved-tickets" element={<ResolvedTickets />} />
           </Route>
         </Route>
 
         {/* Protected Department Lead Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Department Lead']} />}>
-          <Route path="/department-lead" element={<DepartmentLeadHomePage />} />
+          <Route path="/department-lead" element={<DepartmentLeadHomePage />} >
+          <Route path="ticket-queue" element={<TicketQueue />} />
+          <Route path="approvals" element={<Approvals />} />
+          <Route path="team" element={<TeamAgents />} />
+          <Route path="reports" element={<Reports />} />
+          </Route>
         </Route>
 
         {/* Protected System Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['System Admin']} />}>
-          <Route path="/system-admin" element={<SystemAdminHomePage />} />
+          <Route path="/system-admin" element={<SystemAdminHomePage />} >
+          <Route path="users" element={<Users />} />
+          <Route path="departments" element={<Departments />} />
+          <Route path="reports" element={<Reports />} />
+          </Route>
         </Route>
 
         {/* Protected Platform Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Platform Admin']} />}>
-          <Route path="/platform-admin" element={<PlatformAdminHomePage />} />
+          <Route path="/platform-admin" element={<PlatformAdminHomePage />} >
+          <Route path="users" element={<Users />} />
+          </Route>
         </Route>
 
         {/* Fallback route */}
