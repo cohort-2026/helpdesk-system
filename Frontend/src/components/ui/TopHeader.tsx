@@ -3,9 +3,11 @@ import { IoChevronDownOutline, IoNotificationsOutline, IoSearch, IoMenuOutline }
 import { Input } from './Input'
 import { useState } from 'react'
 import ProfileDropDown from './ProfileDropDown'
+import { useAuth } from '../../context/AuthContext'
 
 const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -59,14 +61,14 @@ const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                   <img
                     className="h-8 w-8 rounded-full bg-secondary/30"
                     src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    alt="Tom Cook"
+                    alt="User Avatar"
                   />
                   <span className="hidden lg:flex lg:items-center">
                     <span
                       className="text-sm font-semibold leading-6 text-body-text"
                       aria-hidden="true"
                     >
-                      John Doe
+                      {user?.name || "User"}
                     </span>
                     <IoChevronDownOutline className="ml-2 h-5 w-5 text-body-text/60" />
                   </span>
