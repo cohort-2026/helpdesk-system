@@ -1,8 +1,13 @@
 import React from 'react'
 import { IoChevronDownOutline, IoNotificationsOutline, IoSearch, IoMenuOutline } from 'react-icons/io5'
 import { Input } from './Input'
+import { useState } from 'react'
+import ProfileDropDown from './ProfileDropDown'
 
 const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
+
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-secondary/20 bg-background px-4 sm:px-6 lg:px-8">
           <button
@@ -48,7 +53,8 @@ const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
               <div className="flex items-center gap-x-4">
                 <button
                   type="button"
-                  className="flex items-center gap-x-3 p-1.5 outline-none"
+                  className="flex items-center gap-x-3 p-1.5 outline-none cursor-pointer"
+                  onClick={() => setIsOpen(!isOpen)}
                 >
                   <img
                     className="h-8 w-8 rounded-full bg-secondary/30"
@@ -66,6 +72,10 @@ const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                   </span>
                 </button>
               </div>
+
+              {isOpen && (
+              <ProfileDropDown />
+              )}
             </div>
           </div>
         </div>
