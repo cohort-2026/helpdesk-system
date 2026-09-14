@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, type ReactNode } from 'react'; 
 
 // Define the role types
-export type Role = 'employee' | 'agent' | 'department lead' | 'system admin' | 'platform admin' | null;
+export type Role = 'Employee' | 'Agent' | 'Department Lead' | 'System Admin' | 'Platform Admin' | null;
 
 // Define the User shape
 export interface User {
@@ -10,12 +10,12 @@ export interface User {
   role: Role;
 }
 
-// Define the AuthContext state shape
 interface AuthContextState {
   isAuthenticated: boolean;
   user: User | null;
+  loading: boolean;
   login: (user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 // Create the context
@@ -24,25 +24,54 @@ const AuthContext = createContext<AuthContextState | undefined>(undefined);
 // Provide the context
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            setUser(data.user);
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const login = (newUser: User) => {
     setUser(newUser);
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    try {
+      await fetch('http://localhost:5000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = (): AuthContextState => {
   const context = useContext(AuthContext);
   if (context === undefined) {
