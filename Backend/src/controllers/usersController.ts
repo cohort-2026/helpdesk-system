@@ -31,7 +31,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
             department_id
         });
 
-        // await sendTempPasswordEmail(email, tempPassword);
+        await sendTempPasswordEmail(email, tempPassword);
 
         console.log("tempPass: ", tempPassword)
 
