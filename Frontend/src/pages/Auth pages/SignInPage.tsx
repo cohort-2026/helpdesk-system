@@ -113,14 +113,14 @@ const SignInPage = () => {
           textAlign: "center",
         }}
       >
-        <p>
+        {/* <p>
           <strong>Dummy Accounts:</strong>
         </p>
         <p>employee@test.com</p>
         <p>agent@test.com</p>
         <p>lead@test.com</p>
         <p>admin@test.com</p>
-        <p>platform@test.com</p>
+        <p>platform@test.com</p> */}
       </div>
     </div>
   );

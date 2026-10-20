@@ -14,7 +14,7 @@ import ResolvedTickets from '../pages/agent/ResolvedTickets';
 import Reports from '../pages/department lead/Reports';
 import TeamAgents from '../pages/department lead/TeamAgents';
 import Approvals from '../pages/department lead/Approvals';
-import Users from '../pages/system admin/Users';
+import Users from '../pages/users/Users';
 import Departments from '../pages/system admin/Departments';
 
 const AppRouter = () => {
