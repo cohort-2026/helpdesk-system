@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 } 
 export const me = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.[COOKIE_NAME];
-    console.log(" token received:", token);
+    // console.log(" token received:", token);
     if(!token) {
         return res.status(401).json({message: "Not authenticated"})
     }

@@ -20,3 +20,13 @@ export interface CreateUserDto {
     active?: boolean;
     department_id?: number | null;
 }
+
+export interface UpdateUserDto {
+    name?: string;
+    surname?: string;
+    email?: string;
+    password?: string;
+    role?: string;
+    active?: boolean;
+    department_id?: number | null;
+}
