@@ -91,9 +91,33 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 
         const { name, surname, email, password, role, active, department_id } = req.body;
 
-        const updatedUser = await userServices.updateUser(idToUpdate, {
-            name, surname, email, password, role, active, department_id
-        });
+        const updatePayload: any = {};
+        if (name !== undefined && name.trim() !== "") updatePayload.name = name.trim();
+        if (surname !== undefined && surname.trim() !== "") updatePayload.surname = surname.trim();
+        if (email !== undefined && email.trim() !== "") updatePayload.email = email.trim();
+
+        if (password !== undefined && password !== null) {
+            const trimmedPassword = password.toString().trim();
+            if (trimmedPassword !== "") {
+                if (trimmedPassword.length < 6) {
+                    return res.status(400).json({ message: "Password must be at least 6 characters long." });
+                }
+                updatePayload.password = trimmedPassword;
+            }
+        }
+
+        // Only allow changing role/status/department if modifying other users (admin managing users)
+        if (idToUpdate !== authUser.user_id) {
+            if (role !== undefined) updatePayload.role = role;
+            if (active !== undefined) updatePayload.active = active;
+            if (department_id !== undefined) updatePayload.department_id = department_id;
+        }
+
+        if (Object.keys(updatePayload).length === 0) {
+            return res.status(400).json({ message: "No valid fields provided for update." });
+        }
+
+        const updatedUser = await userServices.updateUser(idToUpdate, updatePayload);
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found or update failed." });
