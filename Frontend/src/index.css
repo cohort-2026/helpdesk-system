@@ -2,13 +2,54 @@
 
 @theme {
   --color-background: #ffffff;
-  --color-primary: #6A89A7;
-  --color-secondary: #88BDF2;
-  --color-accent: #BDDDFC;
+  --color-primary: #6a89a7;
+  --color-secondary: #88bdf2;
+  --color-accent: #bdddfc;
   --color-body-text: #384959;
   --font-sans: "Be Vietnam Pro", sans-serif;
 }
 
 body {
   @apply bg-background text-body-text font-sans;
+}
+
+/* HTML: <div class="loader"></div> */
+.loader {
+  width: 60px;
+  aspect-ratio: 4;
+  --_g: no-repeat radial-gradient(circle closest-side, #000 90%, #0000);
+  background:
+    var(--_g) 0% 50%,
+    var(--_g) 50% 50%,
+    var(--_g) 100% 50%;
+  background-size: calc(100% / 3) 100%;
+  animation: l7 1s infinite linear;
+}
+
+/* .loaderCont{
+  display: flex;
+  justify-content: center;  
+  align-items: center;
+  height: 100vh;
+  zindex: 50;
+} */
+@keyframes l7 {
+  33% {
+    background-size:
+      calc(100% / 3) 0%,
+      calc(100% / 3) 100%,
+      calc(100% / 3) 100%;
+  }
+  50% {
+    background-size:
+      calc(100% / 3) 100%,
+      calc(100% / 3) 0%,
+      calc(100% / 3) 100%;
+  }
+  66% {
+    background-size:
+      calc(100% / 3) 100%,
+      calc(100% / 3) 100%,
+      calc(100% / 3) 0%;
+  }
 }

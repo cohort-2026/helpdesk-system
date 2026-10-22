@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import * as userServices from "../services/userService";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import next from "next/dist/server/next";
 
 const COOKIE_NAME = "session";
 const COOKIE_OPTIONS = {
@@ -49,6 +48,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
      const invalidCredentials = () => res.status(401).json({message: "Invalid email or password"});
 
     try {
+        
         const user = await userServices.findUserByEmail(email);
         if(!user) {
 
@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 } 
 export const me = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.[COOKIE_NAME];
-    console.log(" token received:", token);
+    // console.log(" token received:", token);
     if(!token) {
         return res.status(401).json({message: "Not authenticated"})
     }
@@ -93,6 +93,7 @@ export const me = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { id: string; email: string; role: string };
         const user = await userServices.findUserByEmail(decoded.email);
+
         if(!user) {
             return res.status(401).json({message: "Not authenticated"})
         }

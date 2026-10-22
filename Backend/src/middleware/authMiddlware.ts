@@ -6,11 +6,11 @@ const COOKIE_NAME = "session";
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.[COOKIE_NAME];
-    console.log("Middleware token received:", token);
+    // console.log("Middleware token received:", token);
     if (!token) {
         return res.status(401).json({ message: "Not authenticated" });
     }
-
+    
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { id: string; email: string; role: string };
         const user = await userServices.findUserByEmail(decoded.email);
@@ -35,4 +35,6 @@ export const requireRole = (role: string) => {
         }
         next();
     };
+    
 };
+
