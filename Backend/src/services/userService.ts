@@ -16,3 +16,21 @@ export const createUser = async (userData: CreateUserDto): Promise<User> => {
   );
   return rows[0];
 };
+
+export const setResetToken = async (userId: string, token: string, expiry: Date) => {
+  await query(
+    "UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE user_id = $3",
+    [token, expiry, userId]
+  );
+};
+export const findUserByResetToken = async (token: string) => {
+  const result = await query("SELECT * FROM users WHERE reset_token = $1", [token]);
+  return result.rows[0];
+};
+
+export const updatePasswordAndClearToken = async (userId: string, hashedPassword: string) => {
+  await query(
+    "UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE user_id = $2",
+    [hashedPassword, userId]
+  );
+};
