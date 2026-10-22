@@ -10,7 +10,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     if (!token) {
         return res.status(401).json({ message: "Not authenticated" });
     }
-
+    
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { id: string; email: string; role: string };
         const user = await userServices.findUserByEmail(decoded.email);

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth, type Role } from "../../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth} from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Alert } from "../../components/ui/Alert";
@@ -104,13 +104,22 @@ const SignInPage = () => {
         <Button type="submit" variant="primary">
           Sign In
         </Button>
-      </form>
+      
+            </form>
+
+      <p style={{ marginTop: "15px", fontSize: "14px" }}>
+        Forgot your password?{" "}
+        <Link
+          to="/forgot-password"
+          style={{ color: "#2563eb", textDecoration: "none" }}
+        >
+          Reset it here
+        </Link>
+      </p>
+
       <div
         style={{
           marginTop: "20px",
-          fontSize: "14px",
-          color: "#555",
-          textAlign: "center",
         }}
       >
         {/* <p>
