@@ -16,6 +16,9 @@ import TeamAgents from '../pages/department lead/TeamAgents';
 import Approvals from '../pages/department lead/Approvals';
 import Users from '../pages/users/Users';
 import Departments from '../pages/system admin/Departments';
+import ForgotPasswordPage from '../pages/Auth pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/Auth pages/ResetPasswordPage';
+
 
 const AppRouter = () => {
   return (
@@ -23,6 +26,9 @@ const AppRouter = () => {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<SignInPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
 
         {/* Protected Employee Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Employee']} />}>
