@@ -39,6 +39,7 @@ const Table: React.FC = () => {
             <th scope="col" className="px-4 py-3">Name</th>
             <th scope="col" className="px-4 py-3">Email</th>
             <th scope="col" className="px-4 py-3">Role</th>
+            <th scope="col" className="px-4 py-3">Department</th>
             <th scope="col" className="px-4 py-3">Status</th>
             <th scope="col" className="px-4 py-3 text-right">Actions</th>
           </tr>
@@ -60,6 +61,11 @@ const Table: React.FC = () => {
                 <td className="px-4 py-3 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
                     {user.role}
+                  </span>
+                </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                    {user.department_id }
                   </span>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
