@@ -49,3 +49,23 @@ export const updateUser = async (user_id: string, updateData: UpdateUserDto): Pr
   const { rows } = await query(updateQuery, values);
   return rows[0] || null;
 };
+
+export const getAllUsers = async (roles?: string[]): Promise<User[]> => {
+  if (roles && roles.length > 0) {
+    const { rows } = await query(
+      "SELECT user_id, name, surname, email, role, active, created_at, department_id FROM users WHERE role::text = ANY($1::text[]) ORDER BY created_at DESC",
+      [roles]
+    );
+    return rows;
+  }
+  const { rows } = await query(
+    "SELECT user_id, name, surname, email, role, active, created_at, department_id FROM users ORDER BY created_at DESC"
+  );
+  return rows;
+};
+
+export const deleteUser = async (user_id: string): Promise<boolean> => {
+  const { rowCount } = await query("DELETE FROM users WHERE user_id = $1", [user_id]);
+  return (rowCount ?? 0) > 0;
+};
+
