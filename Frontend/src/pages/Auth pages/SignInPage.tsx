@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth} from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Alert } from "../../components/ui/Alert";
@@ -12,6 +12,7 @@ const SignInPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,13 +22,13 @@ const SignInPage = () => {
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
         { email, password },
-        { withCredentials: true }
+        { withCredentials: true },
       );
-      
+
       const user = response.data.user;
       // console.log(user);
       login(user);
-      
+
       const role = user.role;
       switch (role) {
         case "Employee":
@@ -49,7 +50,9 @@ const SignInPage = () => {
           navigate("/");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred during sign in.");
+      setError(
+        err.response?.data?.message || "An error occurred during sign in.",
+      );
     }
   };
 
@@ -89,17 +92,55 @@ const SignInPage = () => {
             label="Email"
           />
         </div>
-        <div>
+        <div style={{ position: "relative", width: "100%" }}>
           <Input
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
+            style={{
+              width: "100%",
+              padding: "8px",
+              paddingRight: "40px",
+              boxSizing: "border-box",
+            }}
             required
             placeholder="enter your password"
             label="Password"
           />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              top: "32px",
+              cursor: "pointer",
+              display: "flex",
+            }}
+          >
+            {showPassword ? (
+              // CLOSED EYE - when password is visible, show this to close it
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="black"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M3 6 Q12 18 21 6" />
+                <path d="M5 9 L3 13" />
+                <path d="M8 12 L7 16" />
+                <path d="M12 13.5 L12 18" />
+                <path d="M16 12 L17 16" />
+                <path d="M19 9 L21 13" />
+              </svg>
+            ) : (
+              // OPEN EYE - simple emoji when hidden
+              <span style={{ fontSize: "22px" }}>👁️</span>
+            )}
+          </span>
         </div>
         <Button type="submit" variant="primary">
           Sign In
@@ -109,8 +150,7 @@ const SignInPage = () => {
   Forgot password?
 </Link>
          */}
-        
-            </form>
+      </form>
 
       <p style={{ marginTop: "15px", fontSize: "14px" }}>
         Forgot your password?{" "}
