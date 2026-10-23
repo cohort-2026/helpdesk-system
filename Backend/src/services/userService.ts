@@ -1,6 +1,6 @@
 import { query } from "../config/database";
 import bcrypt from "bcryptjs";
-import { User, CreateUserDto } from "../types/user.types";
+import { User, CreateUserDto, UpdateUserDto } from "../types/user.types";
 
 export const findUserByEmail = async (email: string): Promise<User | null> => {
   const { rows } = await query("SELECT * FROM users WHERE email = $1", [email]);

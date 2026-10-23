@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { testDbConnection } from "./src/config/database";
 import authRoutes from "./src/routes/authRoutes";
+import userRoutes from "./src/routes/userRoutes";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.get("/", (req, res) => {
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 const startServer = async () => {
   await testDbConnection();

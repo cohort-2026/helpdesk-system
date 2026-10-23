@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth, type Role } from "../../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth} from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { Alert } from "../../components/ui/Alert";
+import axios from "axios";
 
 const SignInPage = () => {
   const { login } = useAuth();
@@ -11,54 +13,43 @@ const SignInPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    let role: Role = null;
-
-    // Dummy email to role mapping
-    if (email === "employee@test.com") role = "employee";
-    else if (email === "agent@test.com") role = "agent";
-    else if (email === "lead@test.com") role = "department lead";
-    else if (email === "admin@test.com") role = "system admin";
-    else if (email === "platform@test.com") role = "platform admin";
-
-    if (!role) {
-      setError(
-        "Invalid email or password. Try one of the test accounts below.",
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email, password },
+        { withCredentials: true }
       );
-      return;
-    }
-
-    // Create dummy user data based on role
-    const dummyUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: `Test ${role}`,
-      role: role,
-    };
-
-    login(dummyUser);
-
-    // Redirect to the appropriate home page based on role
-    switch (role) {
-      case "employee":
-        navigate("/employee");
-        break;
-      case "agent":
-        navigate("/agent");
-        break;
-      case "department lead":
-        navigate("/department-lead");
-        break;
-      case "system admin":
-        navigate("/system-admin");
-        break;
-      case "platform admin":
-        navigate("/platform-admin");
-        break;
-      default:
-        navigate("/");
+      
+      const user = response.data.user;
+      // console.log(user);
+      login(user);
+      
+      const role = user.role;
+      switch (role) {
+        case "Employee":
+          navigate("/employee");
+          break;
+        case "Agent":
+          navigate("/agent");
+          break;
+        case "Department Lead":
+          navigate("/department-lead");
+          break;
+        case "System Admin":
+          navigate("/system-admin");
+          break;
+        case "Platform Admin":
+          navigate("/platform-admin");
+          break;
+        default:
+          navigate("/");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred during sign in.");
     }
   };
 
@@ -82,7 +73,9 @@ const SignInPage = () => {
         }}
       >
         {error && (
-          <div style={{ color: "red", marginBottom: "10px" }}>{error}</div>
+          <div style={{ marginBottom: "10px" }}>
+            <Alert variant="error" description={error} />
+          </div>
         )}
         <div>
           <Input
@@ -111,23 +104,32 @@ const SignInPage = () => {
         <Button type="submit" variant="primary">
           Sign In
         </Button>
-      </form>
+      
+            </form>
+
+      <p style={{ marginTop: "15px", fontSize: "14px" }}>
+        Forgot your password?{" "}
+        <Link
+          to="/forgot-password"
+          style={{ color: "#2563eb", textDecoration: "none" }}
+        >
+          Reset it here
+        </Link>
+      </p>
+
       <div
         style={{
           marginTop: "20px",
-          fontSize: "14px",
-          color: "#555",
-          textAlign: "center",
         }}
       >
-        <p>
+        {/* <p>
           <strong>Dummy Accounts:</strong>
         </p>
         <p>employee@test.com</p>
         <p>agent@test.com</p>
         <p>lead@test.com</p>
         <p>admin@test.com</p>
-        <p>platform@test.com</p>
+        <p>platform@test.com</p> */}
       </div>
     </div>
   );
