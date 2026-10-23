@@ -104,9 +104,12 @@ const SignInPage = () => {
         <Button type="submit" variant="primary">
           Sign In
         </Button>
+        {/*
       <Link to="/forgot-password" style={{ fontSize: "14px", textAlign: "center" }}>
   Forgot password?
 </Link>
+         */}
+        
             </form>
 
       <p style={{ marginTop: "15px", fontSize: "14px" }}>
