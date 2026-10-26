@@ -76,12 +76,12 @@ const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
               </div>
 
               {isOpen && (
-              <ProfileDropDown />
+                <ProfileDropDown onClose={() => setIsOpen(false)} />
               )}
             </div>
           </div>
         </div>
-  )
-}
+  );
+};
 
 export default TopHeader

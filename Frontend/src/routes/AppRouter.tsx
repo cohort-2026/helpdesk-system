@@ -14,8 +14,12 @@ import ResolvedTickets from '../pages/agent/ResolvedTickets';
 import Reports from '../pages/department lead/Reports';
 import TeamAgents from '../pages/department lead/TeamAgents';
 import Approvals from '../pages/department lead/Approvals';
-import Users from '../pages/system admin/Users';
+import Users from '../pages/users/Users';
 import Departments from '../pages/system admin/Departments';
+import UserProfile from '../pages/user profile/UserProfile';
+import ForgotPasswordPage from '../pages/Auth pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/Auth pages/ResetPasswordPage';
+
 
 const AppRouter = () => {
   return (
@@ -23,6 +27,9 @@ const AppRouter = () => {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<SignInPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
 
         {/* Protected Employee Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Employee']} />}>
@@ -30,6 +37,7 @@ const AppRouter = () => {
             <Route index element={<EmployeeDashboard />} />
             <Route path="my-requests" element={<EmployeeDashboard />} />
             <Route path="submit-request" element={<EmployeeSubmitRequest />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
 
@@ -39,32 +47,36 @@ const AppRouter = () => {
             <Route path="ticket-queue" element={<TicketQueue />} />
             <Route path="assigned-tickets" element={<AssignedTickets />} />
             <Route path="resolved-tickets" element={<ResolvedTickets />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
 
         {/* Protected Department Lead Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Department Lead']} />}>
           <Route path="/department-lead" element={<DepartmentLeadHomePage />} >
-          <Route path="ticket-queue" element={<TicketQueue />} />
-          <Route path="approvals" element={<Approvals />} />
-          <Route path="team" element={<TeamAgents />} />
-          <Route path="reports" element={<Reports />} />
+            <Route path="ticket-queue" element={<TicketQueue />} />
+            <Route path="approvals" element={<Approvals />} />
+            <Route path="team" element={<TeamAgents />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
 
         {/* Protected System Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['System Admin']} />}>
           <Route path="/system-admin" element={<SystemAdminHomePage />} >
-          <Route path="users" element={<Users />} />
-          <Route path="departments" element={<Departments />} />
-          <Route path="reports" element={<Reports />} />
+            <Route path="users" element={<Users />} />
+            <Route path="departments" element={<Departments />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
 
         {/* Protected Platform Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['Platform Admin']} />}>
           <Route path="/platform-admin" element={<PlatformAdminHomePage />} >
-          <Route path="users" element={<Users />} />
+            <Route path="users" element={<Users />} />
+            <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
 

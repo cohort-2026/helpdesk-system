@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import * as userServices from "../services/userService";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import next from "next/dist/server/next";
+import { sendPasswordResetEmail } from "../utils/mailer";
+import crypto from "crypto";
 
 const COOKIE_NAME = "session";
 const COOKIE_OPTIONS = {
@@ -85,7 +88,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 } 
 export const me = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.[COOKIE_NAME];
-    console.log(" token received:", token);
+    // console.log(" token received:", token);
     if(!token) {
         return res.status(401).json({message: "Not authenticated"})
     }
@@ -103,3 +106,53 @@ export const me = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(401).json({message: "Not authenticated"})
     }
 }
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email is required." });
+
+  const genericResponse = {
+    message: "Check your inbox. A password reset link will arrive shortly for any account linked to that email address..",
+  };
+
+   try {
+    const user = await userServices.findUserByEmail(email);
+    console.log("Forgot password: user found?", !!user, "for email:", email);
+
+    if (user) {
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiry = new Date(Date.now() + 1000 * 60 * 30);
+
+      await userServices.setResetToken(user.user_id, token, expiry);
+      console.log("Forgot password: token saved, sending email to", user.email);
+
+      const info = await sendPasswordResetEmail(user.email, token);
+      console.log("Forgot password: email sent", info);
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+  }
+
+  return res.status(200).json(genericResponse);
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Token and new password are required." });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters long." });
+  }
+
+  const user = await userServices.findUserByResetToken(token);
+
+  if (!user || !user.reset_token_expiry || new Date(user.reset_token_expiry) < new Date()) {
+    return res.status(400).json({ message: "Invalid or expired reset token." });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  await userServices.updatePasswordAndClearToken(user.user_id, hashed);
+
+  return res.status(200).json({ message: "Password has been reset successfully." });
+};
