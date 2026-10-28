@@ -20,7 +20,7 @@ export const create = async (req: Request, res: Response) => {
 
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     errors.push("Department name is required.");
-    
+
   } else if (name.trim().length > 255) {
     errors.push("Department name must be 255 characters or fewer.");
   }
@@ -49,3 +49,4 @@ export const create = async (req: Request, res: Response) => {
     return handleError(res, error);
   }
 };
+
