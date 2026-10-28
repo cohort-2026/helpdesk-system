@@ -1,4 +1,5 @@
 import React from 'react'
+import DepartmentTable from '../../components/ui/DepartmentTable'
 import { useRef } from "react";
 import { DepartmentDialog } from '../../components/ui/DepartmentDialog';
 import { Button } from '../../components/ui/Button'
@@ -24,6 +25,7 @@ const Departments = () => {
       </Button>
       <DepartmentDialog ref={departmentDialogRef} />
     </div>
+    <DepartmentTable departments={[]} />
     </div>
   )
 }
