@@ -50,3 +50,23 @@ export const create = async (req: Request, res: Response) => {
   }
 };
 
+export const getAll = async (req: Request, res: Response) => {
+  const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
+  const status = (req.query.status as string) || null;
+  const search = (req.query.search as string)?.trim() || null;
+
+  if (status && !STATUSES.includes(status)) {
+    return res.status(400).json({ message: "Status must be 'active' or 'inactive'." });
+  }
+
+  try {
+    const { departments, total } = await departmentService.getDepartments(page, limit, status, search);
+    return res.status(200).json({
+      departments,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
