@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { requireAuth, requireRole } from "../middleware/authMiddlware";
+import { create } from "../controllers/departmentController";
+
+const router = Router();
+
+router.use(requireAuth, requireRole("System Admin"));
+router.post("/", create);
+
+export default router;
