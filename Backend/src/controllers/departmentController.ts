@@ -88,3 +88,42 @@ export const getOne = async (req: Request, res: Response) => { //FInd by id
     return handleError(res, error);
   }
 };
+
+export const update = async (req: Request, res: Response) => {
+  const idParam = req.params.id as string;
+
+  if (!/^\d+$/.test(idParam)) {
+    return res.status(400).json({ message: "Invalid department ID." });
+  }
+
+  const { name, description } = req.body;
+  const errors: string[] = [];
+
+  if (name !== undefined) {
+    if (typeof name !== "string" || name.trim().length === 0) {
+      errors.push("Department name cannot be empty.");
+    } else if (name.trim().length > 255) {
+      errors.push("Department name must be 255 characters or fewer.");
+    }
+  }
+  if (name === undefined && description === undefined) {
+    errors.push("Provide a name or description to update.");
+  }
+  if (errors.length > 0) {
+    return res.status(400).json({ message: "Validation failed", errors });
+  }
+
+  try {
+    const department = await departmentService.updateDepartment(
+      Number(idParam),
+      name !== undefined ? name.trim() : null,
+      description !== undefined && description !== null ? String(description).trim() : null
+    );
+    if (!department) {
+      return res.status(404).json({ message: "Department not found." });
+    }
+    return res.status(200).json({ department });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};

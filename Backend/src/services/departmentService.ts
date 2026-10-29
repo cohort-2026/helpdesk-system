@@ -48,19 +48,15 @@ export const updateDepartment = async (
   id: number,
   name: string | null,
   description: string | null,
-  status: string | null,
-  leadId: string | null
 ) => {
   const result = await pool.query(
     `UPDATE department
      SET department_name = COALESCE($1, department_name),
          description = COALESCE($2, description),
-         status = COALESCE($3, status),
-         lead_id = COALESCE($4, lead_id),
          updated_at = NOW()
-     WHERE department_id = $5
+     WHERE department_id = $3
      RETURNING *`,
-    [name, description, status, leadId, id]
+    [name, description, id]
   );
   return result.rows[0];
 };
