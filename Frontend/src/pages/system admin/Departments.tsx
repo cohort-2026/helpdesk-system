@@ -1,4 +1,3 @@
-import React from 'react'
 import DepartmentTable from '../../components/ui/DepartmentTable'
 import { useRef } from "react";
 import { DepartmentDialog } from '../../components/ui/DepartmentDialog';
