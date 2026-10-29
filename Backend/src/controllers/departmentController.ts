@@ -70,3 +70,21 @@ export const getAll = async (req: Request, res: Response) => {
     return handleError(res, error);
   }
 };
+
+export const getOne = async (req: Request, res: Response) => { //FInd by id 
+  const idParam = req.params.id as string;
+
+  if (!/^\d+$/.test(idParam)) {
+    return res.status(400).json({ message: "Invalid department ID." });
+  }
+
+  try {
+    const department = await departmentService.getDepartmentById(Number(idParam));
+    if (!department) {
+      return res.status(404).json({ message: "Department not found." });
+    }
+    return res.status(200).json({ department });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
