@@ -21,16 +21,15 @@ export const getDepartments = async (
   status: string | null,
   search: string | null
 ) => {
-  const where =
-    ""
+  const where = "WHERE ($1::text IS NULL OR status = $1) AND ($2::text IS NULL OR department_name ILIKE '%' || $2 || '%')";
 
   const data = await pool.query(
     `SELECT * FROM department ${where} ORDER BY department_name LIMIT $3 OFFSET $4`,
-    []
+        [status, search, limit, (page - 1) * limit]
   );
   const count = await pool.query(
     `SELECT COUNT(*)::int AS total FROM department ${where}`,
-    []
+        [status, search]
   );
 
   return { departments: data.rows, total: count.rows[0].total };
