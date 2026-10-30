@@ -1,8 +1,8 @@
 import React from "react";
 
 export interface Department {
-  id: string;
-  name: string;
+  department_id: string;
+  department_name: string;
   departmentLead?: string | null;
 }
 
@@ -52,11 +52,11 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
             (Array.isArray(departments) ? departments : []).map(
               (department) => (
                 <tr
-                  key={department.id}
+                  key={department.department_id}
                   className="transition-colors hover:bg-accent/5"
                 >
                   <td className="whitespace-nowrap px-4 py-3 font-medium">
-                    {department.name}
+                    {department.department_name}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-3 text-body-text/80">

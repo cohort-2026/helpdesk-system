@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const API = "http://localhost:5000/api";
@@ -7,15 +7,17 @@ export const useDepartments = () => {
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAll = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${API}/departments`);
-      setDepartments(res.data.departments || res.data || []);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchAll = useCallback(async () => {
+  try {
+    setLoading(true);
+    const res = await axios.get(`${API}/departments`);
+    const fetchedDepartments = res.data.departments || res.data || [];
+    setDepartments(fetchedDepartments);
+    //console.log("fetched departments:",fetchedDepartments);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
    const add = async (data: any) => {
     const name = typeof data === "string" ? data : data.name;
