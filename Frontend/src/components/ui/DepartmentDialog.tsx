@@ -1,20 +1,19 @@
-
 import React, { useState } from "react";
 import { Button } from "./Button";
 import { Alert } from "./Alert";
+import { useDepartments } from "../../hooks/useDepartments";
 
 interface CreateDepartmentDialogProps {
   ref: React.RefObject<HTMLDialogElement | null>;
 }
 
-export const DepartmentDialog = ({
-  ref,
-}: CreateDepartmentDialogProps) => {
+export const DepartmentDialog = ({ ref }: CreateDepartmentDialogProps) => {
   const [departmentName, setDepartmentName] = useState("");
   const [description, setDescription] = useState("");
   const [departmentLead, setDepartmentLead] = useState("");
   const [nameError, setNameError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const { createDepartment } = useDepartments();
 
   // Temporary options until we connect the users API.
   const departmentLeads: string[] = [];
@@ -32,7 +31,7 @@ export const DepartmentDialog = ({
     ref.current?.close();
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setNameError("");
     setSuccessMessage("");
@@ -45,33 +44,30 @@ export const DepartmentDialog = ({
     }
 
     if (trimmedName.length < 2) {
-      setNameError(
-        "Department name must contain at least 2 characters."
-      );
+      setNameError("Department name must contain at least 2 characters.");
       return;
     }
 
     if (trimmedName.length > 100) {
-      setNameError(
-        "Department name cannot exceed 100 characters."
-      );
+      setNameError("Department name cannot exceed 100 characters.");
       return;
     }
 
-    // Frontend-only for now. No data is saved yet.
-    console.log("Department form data:", {
-      name: trimmedName,
-      description: description.trim(),
-      departmentLead: departmentLead || null,
-    });
-
-    setSuccessMessage(
-      "Form validated successfully! Backend integration is still pending."
-    );
-
-    setDepartmentName("");
-    setDescription("");
-    setDepartmentLead("");
+    try {
+      await createDepartment({
+        name: trimmedName,
+        description: description.trim(),
+      });
+      setSuccessMessage("Department created successfully!");
+      setDepartmentName("");
+      setDescription("");
+      setDepartmentLead("");
+      setTimeout(() => {
+        closeModal();
+      }, 800);
+    } catch (err: any) {
+      setNameError(err.message || "Failed to create department");
+    }
   };
 
   return (
@@ -89,10 +85,7 @@ export const DepartmentDialog = ({
         </h2>
 
         {successMessage && (
-          <Alert
-            variant="success"
-            description={successMessage}
-          />
+          <Alert variant="success" description={successMessage} />
         )}
 
         <form
@@ -123,9 +116,7 @@ export const DepartmentDialog = ({
               required
               placeholder="Enter department name"
               aria-invalid={Boolean(nameError)}
-              aria-describedby={
-                nameError ? "departmentNameError" : undefined
-              }
+              aria-describedby={nameError ? "departmentNameError" : undefined}
               className="h-10 w-full rounded-md border border-secondary/50 bg-background px-3 py-2 text-sm text-body-text focus:outline-none focus:ring-2 focus:ring-primary"
             />
 
@@ -147,9 +138,7 @@ export const DepartmentDialog = ({
               className="mb-1 block text-sm font-medium text-body-text"
             >
               Description:
-              <span className="ml-1 font-normal text-gray-500">
-                (Optional)
-              </span>
+              <span className="ml-1 font-normal text-gray-500">(Optional)</span>
             </label>
 
             <textarea
@@ -169,9 +158,7 @@ export const DepartmentDialog = ({
               className="text-sm font-medium text-body-text"
             >
               Department Lead:
-              <span className="ml-1 font-normal text-gray-500">
-                (Optional)
-              </span>
+              <span className="ml-1 font-normal text-gray-500">(Optional)</span>
             </label>
 
             <select
@@ -196,11 +183,7 @@ export const DepartmentDialog = ({
 
           {/* Actions */}
           <div className="mt-2 flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeModal}
-            >
+            <Button type="button" variant="outline" onClick={closeModal}>
               Cancel
             </Button>
 

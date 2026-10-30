@@ -1,4 +1,3 @@
-
 import React from "react";
 
 export interface Department {
@@ -13,7 +12,7 @@ interface DepartmentTableProps {
 }
 
 const DepartmentTable: React.FC<DepartmentTableProps> = ({
-  departments,
+  departments = [],
   loading = false,
 }) => {
   return (
@@ -33,31 +32,39 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
         <tbody className="divide-y divide-secondary/15 bg-background">
           {loading ? (
             <tr>
-              <td colSpan={2} className="px-4 py-8 text-center text-body-text/60">
+              <td
+                colSpan={2}
+                className="px-4 py-8 text-center text-body-text/60"
+              >
                 Loading departments...
               </td>
             </tr>
-          ) : departments.length === 0 ? (
+          ) : departments?.length === 0 ? (
             <tr>
-              <td colSpan={2} className="px-4 py-8 text-center text-body-text/60">
+              <td
+                colSpan={2}
+                className="px-4 py-8 text-center text-body-text/60"
+              >
                 No departments found. Click "Add Department" to create one.
               </td>
             </tr>
           ) : (
-            departments.map((department) => (
-              <tr
-                key={department.id}
-                className="transition-colors hover:bg-accent/5"
-              >
-                <td className="whitespace-nowrap px-4 py-3 font-medium">
-                  {department.name}
-                </td>
+            (Array.isArray(departments) ? departments : []).map(
+              (department) => (
+                <tr
+                  key={department.id}
+                  className="transition-colors hover:bg-accent/5"
+                >
+                  <td className="whitespace-nowrap px-4 py-3 font-medium">
+                    {department.name}
+                  </td>
 
-                <td className="whitespace-nowrap px-4 py-3 text-body-text/80">
-                  {department.departmentLead || "Not assigned"}
-                </td>
-              </tr>
-            ))
+                  <td className="whitespace-nowrap px-4 py-3 text-body-text/80">
+                    {department.departmentLead || "Not assigned"}
+                  </td>
+                </tr>
+              ),
+            )
           )}
         </tbody>
       </table>
@@ -66,4 +73,3 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
 };
 
 export default DepartmentTable;
-
