@@ -13,7 +13,7 @@ export const useDepartments = () => {
     const res = await axios.get(`${API}/departments`);
     const fetchedDepartments = res.data.departments || res.data || [];
     setDepartments(fetchedDepartments);
-    //console.log("fetched departments:",fetchedDepartments);
+    //console.log("fetched")
   } finally {
     setLoading(false);
   }
