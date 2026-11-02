@@ -4,7 +4,7 @@ import { create, getAll, getOne, update, remove } from "../controllers/departmen
 
 const router = Router();
 
-router.use(requireAuth, requireRole("System Admin"));
+//router.use(requireAuth, requireRole("System Admin"));
 router.post("/", create);
 router.get("/", getAll);
 router.get("/:id", getOne);

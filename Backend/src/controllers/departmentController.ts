@@ -11,7 +11,7 @@ const handleError = (res: Response, error: any) => {
     return res.status(400).json({ message: "The selected lead does not exist." });
   }
   console.error("Department error:", error);
-  return res.status(500).json({ message: "Something went wrong." });
+  return res.status(500).json({ message: error.message, detail: error.code });
 };
 
 export const create = async (req: Request, res: Response) => {
@@ -37,10 +37,10 @@ export const create = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Validation failed", errors });
   }
 
-  try {
+   try {
     const department = await departmentService.createDepartment(
       name.trim(),
-      description ? String(description).trim() : null,
+      description || null,
       status || "active",
       leadId !== undefined && leadId !== null ? String(leadId) : null
     );
