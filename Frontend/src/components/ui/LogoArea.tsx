@@ -2,7 +2,7 @@ import React from 'react'
 
 const LogoArea = () => {
   return (
-          <div className="flex h-16 shrink-0 items-center px-6">
+          <div className="flex h-16 shrink-0 items-center px-6 position sticky top-0 z-1 bg-background">
           <svg
             className="h-8 w-8 text-primary"
             fill="currentColor"
