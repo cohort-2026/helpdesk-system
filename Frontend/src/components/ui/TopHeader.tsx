@@ -11,7 +11,7 @@ const TopHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-secondary/20 bg-background px-4 sm:px-6 lg:px-8">
+      <div className="flex h-16 position sticky top-0 z-1 shrink-0 items-center justify-between border-b border-secondary/20 bg-background px-4 sm:px-6 lg:px-8">
           <button
             type="button"
             className="-m-2.5 p-2.5 text-body-text/60 hover:text-primary md:hidden mr-4"
