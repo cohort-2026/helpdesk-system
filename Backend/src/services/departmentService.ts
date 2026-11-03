@@ -111,3 +111,12 @@ export const softDeleteDepartment = async (id: number) => {
   );
   return result.rows[0];
 };
+
+export const getUserForLead = async (userId: string) => {
+  const result = await pool.query(
+    "SELECT user_id, email, role, status FROM users WHERE user_id = $1",
+    [userId]
+  );
+  return result.rows[0];
+};
+

@@ -29,4 +29,5 @@ export interface UpdateUserDto {
     role?: string;
     active?: boolean;
     department_id?: number | null;
-}
+}
+
