@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/ticket", ticketRoutes);
+app.use("/api/tickets", ticketRoutes);
 app.use("/api/departments", departmentRoutes);
 
 const startServer = async () => {
