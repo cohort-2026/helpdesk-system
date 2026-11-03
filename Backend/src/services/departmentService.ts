@@ -114,7 +114,7 @@ export const softDeleteDepartment = async (id: number) => {
 
 export const getUserForLead = async (userId: string) => {
   const result = await pool.query(
-    "SELECT user_id, email, role, status FROM users WHERE user_id = $1",
+    "SELECT user_id, email, role, active FROM users WHERE user_id = $1",
     [userId]
   );
   return result.rows[0];
@@ -127,6 +127,17 @@ export const assignDepartmentLead = async (departmentId: number, leadId: string)
      WHERE department_id = $2
      RETURNING *`,
     [leadId, departmentId]
+  );
+  return result.rows[0];
+};
+
+export const removeDepartmentLead = async (departmentId: number) => {
+  const result = await pool.query(
+    `UPDATE department
+     SET lead_id = NULL, updated_at = NOW()
+     WHERE department_id = $1
+     RETURNING *`,
+    [departmentId]
   );
   return result.rows[0];
 };

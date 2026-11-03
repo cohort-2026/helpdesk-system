@@ -181,7 +181,7 @@ export const assignLead = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    if (user.status !== true) {
+    if (user.active !== true) {
       return res.status(400).json({ message: "The selected user is not active." });
     }
   
@@ -196,3 +196,24 @@ export const assignLead = async (req: Request, res: Response) => {
     return handleError(res, error);
   }
 };
+
+export const removeLead = async (req: Request, res: Response) => {
+  const idParam = req.params.id as string;
+
+  if (!/^\d+$/.test(idParam)) {
+    return res.status(400).json({ message: "Invalid department ID." });
+  }
+
+  try {
+    const department = await departmentService.removeDepartmentLead(Number(idParam));
+    if (!department) {
+      return res.status(404).json({ message: "Department not found." });
+    }
+    return res.status(200).json({ message: "Department lead removed.", department });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+    
+
