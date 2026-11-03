@@ -120,3 +120,13 @@ export const getUserForLead = async (userId: string) => {
   return result.rows[0];
 };
 
+export const assignDepartmentLead = async (departmentId: number, leadId: string) => {
+  const result = await pool.query(
+    `UPDATE department
+     SET lead_id = $1, updated_at = NOW()
+     WHERE department_id = $2
+     RETURNING *`,
+    [leadId, departmentId]
+  );
+  return result.rows[0];
+};

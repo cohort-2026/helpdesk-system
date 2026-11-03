@@ -184,10 +184,15 @@ export const assignLead = async (req: Request, res: Response) => {
     if (user.status !== true) {
       return res.status(400).json({ message: "The selected user is not active." });
     }
+  
+    const updated = await departmentService.assignDepartmentLead(
+      Number(idParam),
+      String(leadId)
+    );
 
-    return res.status(200).json({ message: "Department lead assigned." });
-    
+    return res.status(200).json({ message: "Department lead assigned.", updated});
+
   } catch (error) {
     return handleError(res, error);
   }
-  };
+};
