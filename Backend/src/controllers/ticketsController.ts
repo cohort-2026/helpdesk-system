@@ -32,11 +32,7 @@ const handleError = (res: Response, error: any) => {
   return res.status(500).json({ message: "An unexpected error occurred", error: error.message });
 };
 
-/**
- * POST /api/tickets
- * Create a new support ticket
- * Access: Authenticated Employee / User
- */
+
 export const createTicket = async (req: Request, res: Response) => {
   const user = req.user;
   if (!user) {
@@ -208,11 +204,7 @@ export const createTicket = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * GET /api/tickets
- * Retrieve a paginated list of tickets (with filtering)
- * Access: Authenticated User / Agent / Admin
- */
+
 export const fetchTickets = async (req: Request, res: Response) => {
   const user = req.user;
   if (!user) {
@@ -294,11 +286,7 @@ export const fetchTickets = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * GET /api/tickets/:id
- * Retrieve details of a specific ticket
- * Access: Ticket Owner / Agent / Admin
- */
+
 export const getTicketById = async (req: Request, res: Response) => {
   const user = req.user;
   if (!user) {
@@ -332,11 +320,7 @@ export const getTicketById = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * PUT / PATCH /api/tickets/:id
- * Update ticket details or status
- * Access: Ticket Owner (limited) / Agent / Admin
- */
+
 export const updateTicket = async (req: Request, res: Response) => {
   const user = req.user;
   if (!user) {
@@ -522,11 +506,6 @@ export const updateTicket = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * DELETE /api/tickets/:id
- * Delete or soft-delete a ticket
- * Access: Ticket Owner (soft-delete) / System Admin / Platform Admin
- */
 export const deleteTicket = async (req: Request, res: Response) => {
   const user = req.user;
   if (!user) {
