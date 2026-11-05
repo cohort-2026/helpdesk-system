@@ -40,7 +40,7 @@ interface UseDepartmentsOptions {
   pollInterval?: number;
 }
 
-export const useDepartments = (options: UseDepartmentsOptions = {}) => {
+export const useDepartments = (_options: UseDepartmentsOptions = {}) => {
   // const { autoPolling = true, pollInterval = 10000 } = options;
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
