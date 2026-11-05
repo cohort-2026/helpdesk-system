@@ -549,3 +549,46 @@ export const deleteTicket = async (req: Request, res: Response) => {
     return handleError(res, error);
   }
 };
+
+export const assignTicket = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const idParam = req.params.id || req.body.ticket_id || req.body.id;
+  if (!idParam || !/^\d+$/.test(String(idParam).trim())) {
+    return res.status(400).json({ message: "Invalid or missing ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(idParam).trim());
+  const { assignee_id } = req.body;
+
+  if (assignee_id !== undefined && assignee_id !== null && String(assignee_id).trim() !== "") {
+    if (!/^\d+$/.test(String(assignee_id).trim())) {
+      return res.status(400).json({ message: "Assignee ID must be a valid user ID." });
+    }
+  }
+
+  try {
+    const result = await ticketService.assignTicket(
+      ticketId,
+      user,
+      assignee_id !== undefined && assignee_id !== null && String(assignee_id).trim() !== ""
+        ? String(assignee_id).trim()
+        : null
+    );
+
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+
+    return res.status(result.statusCode).json({
+      message: result.message,
+      ticket: result.ticket
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+

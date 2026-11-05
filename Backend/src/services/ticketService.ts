@@ -9,6 +9,8 @@ import {
   TicketComment,
   TicketInternalNote
 } from "../types/ticket.types";
+import { User } from "../types/user.types";
+import { sendTicketAssignedEmail } from "../utils/emailService";
 
 const TICKET_SELECT_FIELDS = `
   t.ticket_id,
@@ -339,3 +341,194 @@ export const deleteTicket = async (
     return (result.rowCount ?? 0) > 0;
   }
 };
+
+export interface AssignTicketResult {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  ticket?: TicketDetail;
+}
+
+export const assignTicket = async (
+  ticketId: number,
+  currentUser: User,
+  assigneeId?: string | null
+): Promise<AssignTicketResult> => {
+  const allowedRoles = ["Agent", "Department Lead", "System Admin", "Platform Admin"];
+  if (!allowedRoles.includes(currentUser.role)) {
+    return {
+      success: false,
+      statusCode: 403,
+      message: "Forbidden: Only support agents, department leads, and administrators can assign tickets."
+    };
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Lock ticket row for update to prevent concurrent double-claiming
+    const ticketResult = await client.query(
+      `SELECT t.*, d.department_name
+       FROM ticket t
+       LEFT JOIN department d ON t.ticket_department_id = d.department_id
+       WHERE t.ticket_id = $1 AND t.deleted_at IS NULL
+       FOR UPDATE OF t`,
+      [ticketId]
+    );
+
+    if (ticketResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return {
+        success: false,
+        statusCode: 404,
+        message: "Ticket not found."
+      };
+    }
+
+    const ticket = ticketResult.rows[0];
+
+    // Status validation: cannot assign closed, resolved, or cancelled tickets
+    const terminalStatuses = ["Closed", "Resolved", "Cancelled"];
+    if (terminalStatuses.includes(ticket.ticket_status)) {
+      await client.query("ROLLBACK");
+      return {
+        success: false,
+        statusCode: 400,
+        message: `Cannot assign a ${ticket.ticket_status.toLowerCase()} ticket.`
+      };
+    }
+
+    let resolvedAssigneeId: string;
+
+    if (currentUser.role === "Agent") {
+      // Support Agents can only self-assign
+      if (assigneeId !== undefined && assigneeId !== null && String(assigneeId).trim() !== "" && String(assigneeId).trim() !== String(currentUser.user_id)) {
+        await client.query("ROLLBACK");
+        return {
+          success: false,
+          statusCode: 403,
+          message: "Forbidden: Support agents can only assign tickets to themselves."
+        };
+      }
+      resolvedAssigneeId = String(currentUser.user_id);
+
+      // Validate department: requesting agent must belong to the same department as the ticket
+      if (
+        currentUser.department_id === null ||
+        currentUser.department_id === undefined ||
+        ticket.ticket_department_id === null ||
+        Number(currentUser.department_id) !== Number(ticket.ticket_department_id)
+      ) {
+        await client.query("ROLLBACK");
+        return {
+          success: false,
+          statusCode: 403,
+          message: "Forbidden: You can only assign tickets within your assigned department."
+        };
+      }
+
+      // Validate unassigned: agents can only claim unassigned tickets (prevent double-claiming)
+      if (ticket.assignee_id !== null && ticket.assignee_id !== undefined) {
+        await client.query("ROLLBACK");
+        return {
+          success: false,
+          statusCode: 409,
+          message: "Ticket is already assigned."
+        };
+      }
+    } else {
+      // Department Lead, System Admin, Platform Admin
+      // Department leads can assign any ticket to any agent (or self-assign)
+      if (assigneeId !== undefined && assigneeId !== null && String(assigneeId).trim() !== "") {
+        resolvedAssigneeId = String(assigneeId).trim();
+      } else {
+        resolvedAssigneeId = String(currentUser.user_id);
+      }
+
+      // If assigning to another user, validate that target user exists, is active, and is support staff
+      if (resolvedAssigneeId !== String(currentUser.user_id)) {
+        const targetUserRes = await client.query(
+          "SELECT user_id, name, surname, email, role, active FROM users WHERE user_id = $1",
+          [resolvedAssigneeId]
+        );
+
+        if (targetUserRes.rowCount === 0) {
+          await client.query("ROLLBACK");
+          return {
+            success: false,
+            statusCode: 400,
+            message: "Assignee user not found."
+          };
+        }
+
+        const targetUser = targetUserRes.rows[0];
+        if (!targetUser.active) {
+          await client.query("ROLLBACK");
+          return {
+            success: false,
+            statusCode: 400,
+            message: "Assignee user is inactive."
+          };
+        }
+
+        const staffRoles = ["Agent", "Department Lead", "System Admin", "Platform Admin"];
+        if (!staffRoles.includes(targetUser.role)) {
+          await client.query("ROLLBACK");
+          return {
+            success: false,
+            statusCode: 400,
+            message: "Tickets can only be assigned to support staff (agents or leads)."
+          };
+        }
+      }
+    }
+
+    // Automatically update ticket status: transition from 'Open' to 'In progress' upon assignment
+    let newStatus = ticket.ticket_status;
+    if (ticket.ticket_status === "Open") {
+      newStatus = "In progress";
+    }
+
+    await client.query(
+      `UPDATE ticket
+       SET assignee_id = $1,
+           ticket_status = $2,
+           updated_at = NOW()
+       WHERE ticket_id = $3`,
+      [resolvedAssigneeId, newStatus, ticketId]
+    );
+
+    await client.query("COMMIT");
+
+    // Fetch updated ticket with requester & assignee details
+    const fullTicket = await getTicketById(ticketId, currentUser.role, false);
+
+    // Trigger email notification to employee (ticket requester)
+    if (fullTicket && fullTicket.requester_email) {
+      sendTicketAssignedEmail({
+        recipientEmail: fullTicket.requester_email,
+        recipientName: fullTicket.requester_name || "Valued User",
+        ticketId: fullTicket.ticket_id,
+        ticketTitle: fullTicket.title,
+        assigneeName: fullTicket.assignee_name || "Support Agent",
+        status: fullTicket.ticket_status,
+      }).catch((err) => {
+        console.error("[ticketService] Failed to send ticket assignment email:", err);
+      });
+    }
+
+    return {
+      success: true,
+      statusCode: 200,
+      message: "Ticket assigned successfully",
+      ticket: fullTicket!
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+

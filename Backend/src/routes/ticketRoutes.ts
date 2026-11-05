@@ -4,7 +4,8 @@ import {
   fetchTickets,
   getTicketById,
   updateTicket,
-  deleteTicket
+  deleteTicket,
+  assignTicket
 } from "../controllers/ticketsController";
 import { requireAuth } from "../middleware/authMiddlware";
 
@@ -19,12 +20,21 @@ router.post("/create", createTicket);
 // Retrieve list of tickets with filtering & pagination
 router.get("/", fetchTickets);
 
+// Assign (or self-assign / claim) ticket
+router.put("/:id/assign", assignTicket);
+router.patch("/:id/assign", assignTicket);
+router.post("/:id/assign", assignTicket);
+router.put("/assign/:id", assignTicket);
+router.patch("/assign/:id", assignTicket);
+router.post("/assign/:id", assignTicket);
+router.put("/assign", assignTicket);
+router.post("/assign", assignTicket);
+
 // Retrieve details of a specific ticket
 router.get("/:id", getTicketById);
 
 // Update ticket details or status
 router.put("/update/:id", updateTicket);
-
 
 // Delete or soft-delete a ticket
 router.delete("/delete/:id", deleteTicket);
