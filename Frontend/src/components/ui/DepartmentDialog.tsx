@@ -1,113 +1,39 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import { Button } from "./Button";
 import { Alert } from "./Alert";
-import { useDepartments, type Department } from "../../hooks/useDepartments";
-import { useUsers } from "../../context/UsersContext";
+import { useDepartments } from "../../hooks/useDepartments";
 
-interface DepartmentDialogProps {
-  ref?: React.RefObject<HTMLDialogElement | null>;
-  isOpen?: boolean;
-  departmentToEdit?: Department | null;
-  onClose?: () => void;
-  onSuccess?: () => void;
+interface CreateDepartmentDialogProps {
+  ref: React.RefObject<HTMLDialogElement | null>;
 }
 
-export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
-  ref,
-  isOpen,
-  departmentToEdit,
-  onClose,
-  onSuccess,
-}) => {
-  const isEditMode = Boolean(departmentToEdit);
-  const { createDepartment, updateDepartment, actionLoading } = useDepartments();
-  const { users, fetchUsers, loading: usersLoading } = useUsers();
-
+export const DepartmentDialog = ({ ref }: CreateDepartmentDialogProps) => {
   const [departmentName, setDepartmentName] = useState("");
   const [description, setDescription] = useState("");
   const [departmentLead, setDepartmentLead] = useState("");
-  const [status, setStatus] = useState("active");
   const [nameError, setNameError] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const { createDepartment } = useDepartments();
 
-  // Ensure users list is populated so we have all department leads
-  useEffect(() => {
-    if ((!users || users.length === 0) && fetchUsers) {
-      fetchUsers();
-    }
-  }, [users, fetchUsers]);
-
-  // Filter and display ONLY users with the "Department Lead" role
-  const departmentLeadUsers = useMemo(() => {
-    if (!users || !Array.isArray(users)) return [];
-    return users.filter(
-      (u) =>
-        u.role === "Department Lead" ||
-        u.role?.toLowerCase() === "department lead"
-    );
-  }, [users]);
-
-  // Populate or reset form when modal opens or editing department changes
-  useEffect(() => {
-    if (departmentToEdit) {
-      setDepartmentName(departmentToEdit.department_name || "");
-      setDescription(departmentToEdit.description || "");
-      const leadIdVal =
-        departmentToEdit.lead_id !== undefined && departmentToEdit.lead_id !== null
-          ? String(departmentToEdit.lead_id)
-          : "";
-      setDepartmentLead(leadIdVal);
-      setStatus(departmentToEdit.status || "active");
-    } else {
-      setDepartmentName("");
-      setDescription("");
-      setDepartmentLead("");
-      setStatus("active");
-    }
-    setNameError("");
-    setErrorMessage("");
-    setSuccessMessage("");
-  }, [departmentToEdit, isOpen]);
-
-  // Handle native <dialog> open/close if isOpen prop is controlled
-  useEffect(() => {
-    if (!ref?.current) return;
-    if (isOpen && !ref.current.open) {
-      ref.current.showModal();
-    } else if (isOpen === false && ref.current.open) {
-      ref.current.close();
-    }
-  }, [isOpen, ref]);
+  // Temporary options until we connect the users API.
+  const departmentLeads: string[] = [];
 
   const resetForm = () => {
     setDepartmentName("");
     setDescription("");
     setDepartmentLead("");
-    setStatus("active");
     setNameError("");
-    setErrorMessage("");
     setSuccessMessage("");
   };
 
   const closeModal = () => {
     resetForm();
-    if (onClose) {
-      onClose();
-    }
-    if (ref?.current) {
-      try {
-        ref.current.close();
-      } catch {
-        // ignore if already closed
-      }
-    }
+    ref.current?.close();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setNameError("");
-    setErrorMessage("");
     setSuccessMessage("");
 
     const trimmedName = departmentName.trim();
@@ -128,34 +54,19 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
     }
 
     try {
-      if (isEditMode && departmentToEdit) {
-        await updateDepartment(departmentToEdit.department_id, {
-          name: trimmedName,
-          description: description.trim(),
-          leadId: departmentLead ? departmentLead : null,
-          status,
-        });
-        setSuccessMessage("Department updated successfully!");
-      } else {
-        await createDepartment({
-          name: trimmedName,
-          description: description.trim(),
-          leadId: departmentLead ? departmentLead : null,
-          status,
-        });
-        setSuccessMessage("Department created successfully!");
-      }
-
-      if (onSuccess) {
-        onSuccess();
-      }
-
+      await createDepartment({
+        name: trimmedName,
+        description: description.trim(),
+      });
+      setSuccessMessage("Department created successfully!");
+      setDepartmentName("");
+      setDescription("");
+      setDepartmentLead("");
       setTimeout(() => {
         closeModal();
-      }, 700);
+      }, 800);
     } catch (err: any) {
-      const msg = err.message || (isEditMode ? "Failed to update department" : "Failed to create department");
-      setErrorMessage(msg);
+      setNameError(err.message || "Failed to create department");
     }
   };
 
@@ -163,41 +74,18 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
     <dialog
       ref={ref}
       aria-labelledby="departmentModalTitle"
-      className="m-auto w-full max-w-xl rounded-xl bg-white p-6 shadow-2xl backdrop:bg-black/60 border border-secondary/20 transition-all"
+      className="m-auto w-full max-w-xl rounded-lg bg-white p-6 shadow-lg backdrop:bg-black/50"
     >
       <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2
-              id="departmentModalTitle"
-              className="text-xl font-bold text-gray-900 sm:text-2xl"
-            >
-              {isEditMode ? "Edit Department" : "Create New Department"}
-            </h2>
-            <p className="text-xs text-body-text/70 mt-1">
-              {isEditMode
-                ? "Update department details, status, and lead assignment."
-                : "Fill in the details below to create a department and assign a lead."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={closeModal}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
-            aria-label="Close modal"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+        <h2
+          id="departmentModalTitle"
+          className="text-xl font-bold text-gray-900 sm:text-2xl"
+        >
+          Create New Department
+        </h2>
 
         {successMessage && (
           <Alert variant="success" description={successMessage} />
-        )}
-
-        {errorMessage && (
-          <Alert variant="error" description={errorMessage} />
         )}
 
         <form
@@ -211,7 +99,7 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
               htmlFor="departmentName"
               className="mb-1 block text-sm font-medium text-body-text"
             >
-              Department Name <span className="text-red-500">*</span>:
+              Department Name:
             </label>
 
             <input
@@ -221,13 +109,12 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
               onChange={(e) => {
                 setDepartmentName(e.target.value);
                 setNameError("");
-                setErrorMessage("");
                 setSuccessMessage("");
               }}
               minLength={2}
               maxLength={100}
               required
-              placeholder="e.g. Technical Support, Human Resources"
+              placeholder="Enter department name"
               aria-invalid={Boolean(nameError)}
               aria-describedby={nameError ? "departmentNameError" : undefined}
               className="h-10 w-full rounded-md border border-secondary/50 bg-background px-3 py-2 text-sm text-body-text focus:outline-none focus:ring-2 focus:ring-primary"
@@ -251,33 +138,28 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
               className="mb-1 block text-sm font-medium text-body-text"
             >
               Description:
+              <span className="ml-1 font-normal text-gray-500">(Optional)</span>
             </label>
 
             <textarea
               id="departmentDescription"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the department's responsibilities and scope"
+              placeholder="Describe the department's responsibilities"
               rows={3}
               className="w-full rounded-md border border-secondary/50 bg-background px-3 py-2 text-sm text-body-text focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
-          {/* Department Lead Selection - Filtered strictly to 'Department Lead' role */}
+          {/* Department Lead */}
           <div className="flex w-full flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="departmentLead"
-                className="text-sm font-medium text-body-text"
-              >
-                Department Lead:
-              </label>
-              <span className="text-xs text-primary font-medium">
-                {usersLoading
-                  ? "Loading leads..."
-                  : `${departmentLeadUsers.length} Lead${departmentLeadUsers.length === 1 ? "" : "s"} Available`}
-              </span>
-            </div>
+            <label
+              htmlFor="departmentLead"
+              className="text-sm font-medium text-body-text"
+            >
+              Department Lead:
+              <span className="ml-1 font-normal text-gray-500">(Optional)</span>
+            </label>
 
             <select
               id="departmentLead"
@@ -285,77 +167,28 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
               onChange={(e) => setDepartmentLead(e.target.value)}
               className="h-10 w-full rounded-md border border-secondary/50 bg-background px-3 py-2 text-sm text-body-text focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="">-- No Department Lead Assigned --</option>
+              <option value="">Select a department lead</option>
 
-              {departmentLead &&
-                !departmentLeadUsers.some(
-                  (l) => String(l.user_id || l.id) === String(departmentLead)
-                ) && (
-                  <option value={departmentLead}>
-                    {departmentToEdit?.departmentLead || `Current Lead (ID: ${departmentLead})`}
-                  </option>
-                )}
-
-              {departmentLeadUsers.map((lead) => {
-                const leadId = lead.user_id || lead.id || "";
-                const fullName = `${lead.name} ${lead.surname || ""}`.trim() || lead.name;
-                return (
-                  <option key={leadId} value={leadId}>
-                    {fullName} {lead.email ? `(${lead.email})` : ""}
-                  </option>
-                );
-              })}
+              {departmentLeads.map((lead) => (
+                <option key={lead} value={lead}>
+                  {lead}
+                </option>
+              ))}
             </select>
 
-            {departmentLeadUsers.length === 0 && !usersLoading ? (
-              <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
-                No users with the <strong>Department Lead</strong> role were found. Only users assigned the "Department Lead" role are shown here.
-              </p>
-            ) : (
-              <p className="text-xs text-gray-500">
-                Filtered strictly to users with the <strong>Department Lead</strong> role.
-              </p>
-            )}
+            <p className="text-xs text-gray-500">
+              Department lead options will appear when user data is connected.
+            </p>
           </div>
 
-          {/* Status (when editing) */}
-          {isEditMode && (
-            <div className="flex w-full flex-col gap-1.5">
-              <label
-                htmlFor="departmentStatus"
-                className="text-sm font-medium text-body-text"
-              >
-                Status:
-              </label>
-              <select
-                id="departmentStatus"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="h-10 w-full rounded-md border border-secondary/50 bg-background px-3 py-2 text-sm text-body-text focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-          )}
-
           {/* Actions */}
-          <div className="mt-3 flex justify-end gap-2 border-t pt-4 border-secondary/20">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeModal}
-              disabled={actionLoading}
-            >
+          <div className="mt-2 flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={closeModal}>
               Cancel
             </Button>
 
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={actionLoading}
-            >
-              {isEditMode ? "Save Changes" : "Create Department"}
+            <Button type="submit" variant="primary">
+              Create Department
             </Button>
           </div>
         </form>

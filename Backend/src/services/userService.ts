@@ -71,6 +71,7 @@ export const setResetToken = async (userId: string, token: string, expiry: Date)
     [token, expiry, userId]
   );
 };
+
 export const findUserByResetToken = async (token: string) => {
   const result = await query("SELECT * FROM users WHERE reset_token = $1", [token]);
   return result.rows[0];
