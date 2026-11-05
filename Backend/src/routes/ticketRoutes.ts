@@ -22,13 +22,6 @@ router.get("/", fetchTickets);
 
 // Assign (or self-assign / claim) ticket
 router.put("/:id/assign", assignTicket);
-router.patch("/:id/assign", assignTicket);
-router.post("/:id/assign", assignTicket);
-router.put("/assign/:id", assignTicket);
-router.patch("/assign/:id", assignTicket);
-router.post("/assign/:id", assignTicket);
-router.put("/assign", assignTicket);
-router.post("/assign", assignTicket);
 
 // Retrieve details of a specific ticket
 router.get("/:id", getTicketById);
