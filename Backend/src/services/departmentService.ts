@@ -21,15 +21,24 @@ export const getDepartments = async (
   status: string | null,
   search: string | null
 ) => {
-  const where = "WHERE ($1::text IS NULL OR status = $1) AND ($2::text IS NULL OR department_name ILIKE '%' || $2 || '%')";
+  const where = "WHERE ($1::text IS NULL OR d.status = $1) AND ($2::text IS NULL OR d.department_name ILIKE '%' || $2 || '%')";
 
   const data = await pool.query(
-    `SELECT * FROM department ${where} ORDER BY department_name LIMIT $3 OFFSET $4`,
-        [status, search, limit, (page - 1) * limit]
+    `SELECT d.*, 
+            CASE WHEN u.user_id IS NOT NULL THEN TRIM(CONCAT(u.name, ' ', u.surname)) ELSE NULL END AS "departmentLead",
+            u.name AS lead_name,
+            u.surname AS lead_surname,
+            u.email AS lead_email
+     FROM department d
+     LEFT JOIN users u ON d.lead_id::text = u.user_id::text
+     ${where}
+     ORDER BY d.department_name
+     LIMIT $3 OFFSET $4`,
+    [status, search, limit, (page - 1) * limit]
   );
   const count = await pool.query(
-    `SELECT COUNT(*)::int AS total FROM department ${where}`,
-        [status, search]
+    `SELECT COUNT(*)::int AS total FROM department d ${where}`,
+    [status, search]
   );
 
   return { departments: data.rows, total: count.rows[0].total };
@@ -37,7 +46,14 @@ export const getDepartments = async (
 
 export const getDepartmentById = async (id: number) => {
   const result = await pool.query(
-    "SELECT * FROM department WHERE department_id = $1",
+    `SELECT d.*, 
+            CASE WHEN u.user_id IS NOT NULL THEN TRIM(CONCAT(u.name, ' ', u.surname)) ELSE NULL END AS "departmentLead",
+            u.name AS lead_name,
+            u.surname AS lead_surname,
+            u.email AS lead_email
+     FROM department d
+     LEFT JOIN users u ON d.lead_id::text = u.user_id::text
+     WHERE d.department_id = $1`,
     [id]
   );
   return result.rows[0];
@@ -45,17 +61,45 @@ export const getDepartmentById = async (id: number) => {
 
 export const updateDepartment = async (
   id: number,
-  name: string | null,
-  description: string | null,
+  name?: string | null,
+  description?: string | null,
+  status?: string | null,
+  leadId?: string | null
 ) => {
+  const fields: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (name !== undefined) {
+    fields.push(`department_name = $${paramIndex++}`);
+    values.push(name);
+  }
+  if (description !== undefined) {
+    fields.push(`description = $${paramIndex++}`);
+    values.push(description);
+  }
+  if (status !== undefined) {
+    fields.push(`status = $${paramIndex++}`);
+    values.push(status);
+  }
+  if (leadId !== undefined) {
+    fields.push(`lead_id = $${paramIndex++}`);
+    values.push(leadId);
+  }
+
+  if (fields.length === 0) {
+    return getDepartmentById(id);
+  }
+
+  fields.push(`updated_at = NOW()`);
+  values.push(id);
+
   const result = await pool.query(
     `UPDATE department
-     SET department_name = COALESCE($1, department_name),
-      description = COALESCE($2,description),
-         updated_at = NOW()
-     WHERE department_id = $3
+     SET ${fields.join(", ")}
+     WHERE department_id = $${paramIndex}
      RETURNING *`,
-    [name, description, id]
+    values
   );
   return result.rows[0];
 };
@@ -64,6 +108,36 @@ export const softDeleteDepartment = async (id: number) => {
   const result = await pool.query(
     "UPDATE department SET status = 'inactive', updated_at = NOW() WHERE department_id = $1 RETURNING *",
     [id]
+  );
+  return result.rows[0];
+};
+
+export const getUserForLead = async (userId: string) => {
+  const result = await pool.query(
+    "SELECT user_id, email, role, active FROM users WHERE user_id = $1",
+    [userId]
+  );
+  return result.rows[0];
+};
+
+export const assignDepartmentLead = async (departmentId: number, leadId: string) => {
+  const result = await pool.query(
+    `UPDATE department
+     SET lead_id = $1, updated_at = NOW()
+     WHERE department_id = $2
+     RETURNING *`,
+    [leadId, departmentId]
+  );
+  return result.rows[0];
+};
+
+export const removeDepartmentLead = async (departmentId: number) => {
+  const result = await pool.query(
+    `UPDATE department
+     SET lead_id = NULL, updated_at = NOW()
+     WHERE department_id = $1
+     RETURNING *`,
+    [departmentId]
   );
   return result.rows[0];
 };

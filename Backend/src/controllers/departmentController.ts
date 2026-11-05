@@ -29,7 +29,7 @@ export const create = async (req: Request, res: Response) => {
     errors.push("Status must be 'active' or 'inactive'.");
   }
 
-  if (leadId !== undefined && leadId !== null && !/^\d+$/.test(String(leadId))) {
+  if (leadId !== undefined && leadId !== null && leadId !== "" && !/^\d+$/.test(String(leadId))) {
     errors.push("Lead ID must be a valid user ID.");
   }
 
@@ -42,7 +42,7 @@ export const create = async (req: Request, res: Response) => {
       name.trim(),
       description || null,
       status || "active",
-      leadId !== undefined && leadId !== null ? String(leadId) : null
+      leadId !== undefined && leadId !== null && String(leadId).trim() !== "" ? String(leadId).trim() : null
     );
     return res.status(201).json({ department });
   } catch (error) {
@@ -96,7 +96,7 @@ export const update = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid department ID." });
   }
 
-  const { name, description } = req.body;
+  const { name, description, status, leadId } = req.body;
   const errors: string[] = [];
 
   if (name !== undefined) {
@@ -106,8 +106,17 @@ export const update = async (req: Request, res: Response) => {
       errors.push("Department name must be 255 characters or fewer.");
     }
   }
-  if (name === undefined && description === undefined) {
-    errors.push("Provide a name or description to update.");
+
+  if (status !== undefined && !STATUSES.includes(status)) {
+    errors.push("Status must be 'active' or 'inactive'.");
+  }
+
+  if (leadId !== undefined && leadId !== null && leadId !== "" && !/^\d+$/.test(String(leadId))) {
+    errors.push("Lead ID must be a valid user ID.");
+  }
+
+  if (name === undefined && description === undefined && status === undefined && leadId === undefined) {
+    errors.push("Provide a name, description, status, or leadId to update.");
   }
   if (errors.length > 0) {
     return res.status(400).json({ message: "Validation failed", errors });
@@ -116,8 +125,10 @@ export const update = async (req: Request, res: Response) => {
   try {
     const department = await departmentService.updateDepartment(
       Number(idParam),
-      name !== undefined ? name.trim() : null,
-      description !== undefined && description !== null ? String(description).trim() : null
+      name !== undefined ? name.trim() : undefined,
+      description !== undefined ? (description !== null ? String(description).trim() : null) : undefined,
+      status !== undefined ? status : undefined,
+      leadId !== undefined ? (leadId && String(leadId).trim() !== "" ? String(leadId).trim() : null) : undefined
     );
     if (!department) {
       return res.status(404).json({ message: "Department not found." });
@@ -146,3 +157,63 @@ export const remove = async (req: Request, res: Response) => {
     return handleError(res, error);
   }
 };
+
+export const assignLead = async (req: Request, res: Response) => {
+  const idParam = req.params.id as string;
+
+  if (!/^\d+$/.test(idParam)) {
+    return res.status(400).json({ message: "Invalid department ID." });
+  }
+
+  const { leadId } = req.body;
+
+  if (leadId === undefined || leadId === null || !/^\d+$/.test(String(leadId))) {
+    return res.status(400).json({ message: "A valid leadId (user ID) is required." });
+  }
+
+  try {
+    const department = await departmentService.getDepartmentById(Number(idParam));
+    if (!department) {
+      return res.status(404).json({ message: "Department not found." });
+    }
+
+    const user = await departmentService.getUserForLead(String(leadId));
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    if (user.active !== true) {
+      return res.status(400).json({ message: "The selected user is not active." });
+    }
+  
+    const updated = await departmentService.assignDepartmentLead(
+      Number(idParam),
+      String(leadId)
+    );
+
+    return res.status(200).json({ message: "Department lead assigned.", updated});
+
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+export const removeLead = async (req: Request, res: Response) => {
+  const idParam = req.params.id as string;
+
+  if (!/^\d+$/.test(idParam)) {
+    return res.status(400).json({ message: "Invalid department ID." });
+  }
+
+  try {
+    const department = await departmentService.removeDepartmentLead(Number(idParam));
+    if (!department) {
+      return res.status(404).json({ message: "Department not found." });
+    }
+    return res.status(200).json({ message: "Department lead removed.", department });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+    
+
