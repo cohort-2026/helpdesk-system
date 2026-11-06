@@ -15,7 +15,7 @@ const adminOrLead = (req: Request, res: Response, next: NextFunction) => {
 
 router.use(requireAuth);
 router.post("/", adminOnly, create);
-router.get("/", adminOnly, getAll);
+router.get("/", getAll); // Allow all authenticated users to view departments
 router.get("/:id", adminOnly, getOne);
 router.put("/:id", adminOnly, update);
 router.patch("/:id", adminOnly, update);
