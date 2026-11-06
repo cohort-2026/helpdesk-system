@@ -141,3 +141,44 @@ export const removeDepartmentLead = async (departmentId: number) => {
   );
   return result.rows[0];
 };
+export const getUsersByIds = async (userIds: string[]) => {
+  const result = await pool.query(
+    `SELECT user_id, role, active, department_id
+     FROM users
+     WHERE user_id = ANY($1::bigint[])`,
+    [userIds]
+  );
+  return result.rows;
+};
+
+export const addDepartmentMembers = async (departmentId: number, userIds: string[]) => {
+  const result = await pool.query(
+    `UPDATE users
+     SET department_id = $1
+     WHERE user_id = ANY($2::bigint[])
+     RETURNING user_id, name, surname, email, role, department_id`,
+    [departmentId, userIds]
+  );
+  return result.rows;
+};
+
+export const getDepartmentMember = async (departmentId: number, userId: string) => {
+  const result = await pool.query(
+    `SELECT user_id, name, surname, email, role, department_id
+     FROM users
+     WHERE user_id = $1 AND department_id = $2`,
+    [userId, departmentId]
+  );
+  return result.rows[0];
+};
+
+export const removeDepartmentMember = async (departmentId: number, userId: string) => {
+  const result = await pool.query(
+    `UPDATE users
+     SET department_id = NULL
+     WHERE user_id = $1 AND department_id = $2
+     RETURNING user_id, name, surname, email, role, department_id`,
+    [userId, departmentId]
+  );
+  return result.rows[0];
+};
