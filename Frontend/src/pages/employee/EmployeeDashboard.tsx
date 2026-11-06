@@ -3,11 +3,12 @@ import { useTickets } from "../../hooks/useTickets";
 import { useToast } from "../../components/ui/Toast";
 import type { Ticket } from "../../types/ticket.types";
 import { Button } from "../../components/ui/Button";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Loader from "../../components/ui/Loader";
 
 export default function EmployeeDashboard() {
   const { toastElement, showToast } = useToast();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
 
@@ -66,7 +67,7 @@ export default function EmployeeDashboard() {
           <Button
             type="button"
             variant="primary"
-            onClick={() => Navigate("/employee/submit-request")}
+            onClick={() => navigate("/employee/submit-request")}
           >
             New Request
           </Button>
