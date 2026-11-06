@@ -5,6 +5,7 @@ import cors from "cors";
 import { testDbConnection } from "./src/config/database";
 import authRoutes from "./src/routes/authRoutes";
 import userRoutes from "./src/routes/userRoutes";
+import ticketRoutes from "./src/routes/ticketRoutes";
 import departmentRoutes from "./src/routes/departmentRoutes";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/tickets", ticketRoutes);
 app.use("/api/departments", departmentRoutes);
 
 const startServer = async () => {

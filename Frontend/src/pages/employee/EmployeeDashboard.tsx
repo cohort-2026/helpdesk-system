@@ -1,57 +1,29 @@
 import { useState } from "react";
-
-type Ticket = {
-  id: string;
-  title: string;
-  department: string;
-  type: string;
-  priority: "High" | "Medium" | "Low";
-  status: string;
-  description: string;
-};
+import { useTickets } from "../../hooks/useTickets";
+import { useToast } from "../../components/ui/Toast";
+import type { Ticket } from "../../types/ticket.types";
+import { Button } from "../../components/ui/Button";
+import { useNavigate } from "react-router-dom";
+import Loader from "../../components/ui/Loader";
 
 export default function EmployeeDashboard() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const { toastElement, showToast } = useToast();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
 
-  const [form, setForm] = useState({
-    title: "",
-    department: "IT",
-    type: "",
-    priority: "High" as const,
-    description: "",
+  const { tickets, loading, error } = useTickets({
+    filters: { limit: 100 },
+    autoFetch: true,
   });
 
-  const addRequest = () => {
-    if (!form.title.trim()) return;
-    const newTicket: Ticket = {
-      id: `HD ${1042 + tickets.length}`,
-      title: form.title,
-      department: form.department,
-      type: form.type,
-      priority: form.priority,
-      status: "Open",
-      description: form.description,
-    };
-    setTickets([...tickets, newTicket]);
-    setShowModal(false);
-    setForm({
-      title: "",
-      department: "IT",
-      type: "",
-      priority: "High",
-      description: "",
-    });
-  };
-
-  const filtered = tickets.filter((t) => {
-    const matchesSearch = `${t.id} ${t.title}`
+  // Client-side filtering of the fetched tickets
+  const filtered = tickets.filter((t: Ticket) => {
+    const matchesSearch = `${t.ticket_id} ${t.title}`
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchesStatus =
-      statusFilter === "All Statuses" || t.status === statusFilter;
+      statusFilter === "All Statuses" || t.ticket_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -61,172 +33,139 @@ export default function EmployeeDashboard() {
     return "text-teal-600";
   };
 
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      Open: "bg-blue-50 text-blue-700",
+      "In progress": "bg-indigo-50 text-indigo-700",
+      "Pending approval": "bg-amber-50 text-amber-700",
+      Resolved: "bg-emerald-50 text-emerald-700",
+      Closed: "bg-gray-100 text-gray-600",
+      Cancelled: "bg-red-50 text-red-600",
+    };
+    return map[status] || "bg-gray-100 text-gray-700";
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString("en-ZA", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  // Show errors via toast
+  if (error && !loading) {
+    showToast(error, "error");
+  }
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
+      {toastElement}
       <div className="p-6 max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-[20px] font-bold">My Requests</h1>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded-md"
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => navigate("/employee/submit-request")}
           >
-            + New Request
-          </button>
+            New Request
+          </Button>
         </div>
 
+        {/* Search & Filter */}
         <div className="flex gap-3 mb-4">
           <input
+            id="search-tickets"
             placeholder="Search by keyword or Ticket ID..."
-            className="border border-gray-300 rounded px-3 py-2 text-sm w-[380px]"
+            className="border border-gray-300 rounded px-3 py-2 text-sm w-[380px] focus:border-[#6A89A7] outline-none transition-colors"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
-            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+            id="status-filter"
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:border-[#6A89A7] outline-none transition-colors"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option>All Statuses</option>
             <option>Open</option>
+            <option>In progress</option>
             <option>Pending approval</option>
-            <option>Waiting on Employee</option>
+            <option>Resolved</option>
             <option>Closed</option>
+            <option>Cancelled</option>
           </select>
         </div>
 
-        <div className="border border-gray-200 rounded">
-          {filtered.length === 0 && tickets.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-sm text-gray-600">
-                You haven't submitted any requests yet. Need help?
-              </p>
-              <button
-                onClick={() => setShowModal(true)}
-                className="text-blue-600 text-sm mt-1 underline"
-              >
-                Create a new request
-              </button>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-sm text-gray-500">
-              No requests match your search
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {filtered.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex justify-between items-center px-4 py-3 hover:bg-gray-50"
+        {/* Loading State */}
+        {loading && (
+         <Loader/>
+        )}
+
+        {/* Ticket List */}
+        {!loading && (
+          <div className="border border-gray-200 rounded">
+            {filtered.length === 0 && tickets.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="text-sm text-gray-600">
+                  You haven't submitted any requests yet. Need help?
+                </p>
+                <a
+                  href="/employee/submit-request"
+                  className="text-blue-600 text-sm mt-1 underline inline-block"
                 >
-                  <div>
-                    <p className="text-[12px] text-gray-500">
-                      {t.id} · {t.department} · {t.type}
-                    </p>
-                    <p className="text-[14px] font-medium mt-1">{t.title}</p>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <span
-                      className={`text-[13px] font-medium ${priorityColor(t.priority)}`}
-                    >
-                      {t.priority}
-                    </span>
-                    <span className="text-[13px] text-gray-700 w-[160px] text-right">
-                      {t.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="font-bold mb-4">New Request</h2>
-
-            <label className="text-xs text-gray-600">Title *</label>
-            <input
-              className="border w-full rounded px-3 py-2 mb-3 text-sm"
-              placeholder="e.g. Password reset"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="text-xs text-gray-600">Department</label>
-                <select
-                  className="border w-full rounded px-3 py-2 text-sm"
-                  value={form.department}
-                  onChange={(e) =>
-                    setForm({ ...form, department: e.target.value })
-                  }
-                >
-                  <option>IT</option>
-                  <option>Finance</option>
-                  <option>HR</option>
-                  <option>Support</option>
-                  <option>Facilities</option>
-                </select>
+                  Create a new request
+                </a>
               </div>
-              <div>
-                <label className="text-xs text-gray-600">Request Type</label>
-                <input
-                  className="border w-full rounded px-3 py-2 text-sm"
-                  placeholder="e.g. Fix it, New Laptop"
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                />
+            ) : filtered.length === 0 ? (
+              <div className="py-16 text-center text-sm text-gray-500">
+                No requests match your search
               </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs text-gray-600">
-                Priority (High/Medium/Low)
-              </label>
-              <select
-                className="border w-full rounded px-3 py-2 text-sm"
-                value={form.priority}
-                onChange={(e) =>
-                  setForm({ ...form, priority: e.target.value as any })
-                }
-              >
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
-              </select>
-            </div>
-
-            <label className="text-xs text-gray-600">Description</label>
-            <textarea
-              className="border w-full rounded px-3 py-2 mb-4 text-sm"
-              rows={3}
-              placeholder="Describe your issue"
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={addRequest}
-                className="bg-blue-600 text-white px-5 py-2 text-sm rounded"
-              >
-                Submit
-              </button>
-            </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {filtered.map((t: Ticket) => (
+                  <div
+                    key={t.ticket_id}
+                    className="flex justify-between items-center px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div>
+                      <p className="text-[12px] text-gray-500">
+                        HD-{t.ticket_id}
+                        {t.department_name && ` · ${t.department_name}`}
+                      </p>
+                      <p className="text-[14px] font-medium mt-1">{t.title}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        {formatDate(t.created_at)}
+                        {t.assignee_name && ` · Assigned to ${t.assignee_name}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-[13px] font-medium ${priorityColor(t.ticket_priority)}`}
+                      >
+                        {t.ticket_priority}
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadge(t.ticket_status)}`}
+                      >
+                        {t.ticket_status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Count */}
+        {!loading && tickets.length > 0 && (
+          <p className="text-xs text-gray-500 mt-3">
+            Showing {filtered.length} of {tickets.length} requests
+          </p>
+        )}
+      </div>
     </div>
   );
 }

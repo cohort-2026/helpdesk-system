@@ -1,86 +1,69 @@
-
 import { useState } from "react";
-
-type AssignedTicket = {
-  id: string;
-  title: string;
-  reporter: string;
-  priority: "Low" | "Medium" | "High" | "Critical";
-  status: "In Progress" | "On Hold" | "Pending User Response" | "Resolved";
-  updatedAt: string;
-};
-
-const tickets: AssignedTicket[] = [
-  {
-    id: "HD-1048",
-    title: "Unable to access email",
-    reporter: "Thandi Mokoena",
-    priority: "Medium",
-    status: "In Progress",
-    updatedAt: "2026-11-05T10:30:00",
-  },
-  {
-    id: "HD-1050",
-    title: "Network connection issue",
-    reporter: "James Nkosi",
-    priority: "High",
-    status: "In Progress",
-    updatedAt: "2026-11-04T14:00:00",
-  },
-  {
-    id: "HD-1053",
-    title: "Unable to access company software",
-    reporter: "Sarah Johnson",
-    priority: "Critical",
-    status: "On Hold",
-    updatedAt: "2026-11-03T09:00:00",
-  },
-  {
-    id: "HD-1055",
-    title: "Account verification required",
-    reporter: "Nomsa Dlamini",
-    priority: "Low",
-    status: "Pending User Response",
-    updatedAt: "2026-11-05T11:00:00",
-  },
-];
+import { useAuth } from "../../context/AuthContext";
+import { useTickets } from "../../hooks/useTickets";
+import { useToast } from "../../components/ui/Toast";
+import type { Ticket } from "../../types/ticket.types";
+import Loader from "../../components/ui/Loader";
 
 type SortOption = "newest" | "oldest" | "priority";
 
 const AssignedTickets = () => {
+  const { user } = useAuth();
+  const { toastElement, showToast } = useToast();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
 
-  const priorityOrder = {
+  const userId = user?.id || user?.user_id || "";
+
+  const { tickets, loading, error } = useTickets({
+    filters: {
+      assignee_id: userId ? String(userId) : undefined,
+      limit: 100,
+    },
+    autoFetch: !!userId,
+  });
+
+  // Only show active (non-resolved/closed) assigned tickets
+  const activeTickets = tickets.filter(
+    (t) =>
+      t.ticket_status !== "Resolved" &&
+      t.ticket_status !== "Closed" &&
+      t.ticket_status !== "Cancelled"
+  );
+
+  const priorityOrder: Record<string, number> = {
     Critical: 4,
     High: 3,
     Medium: 2,
     Low: 1,
   };
 
-  const filteredTickets = tickets
-    .filter((ticket) => {
+  const filteredTickets = activeTickets
+    .filter((ticket: Ticket) => {
       return (
-        ticket.id.toLowerCase().includes(search.toLowerCase()) ||
+        `HD-${ticket.ticket_id}`.toLowerCase().includes(search.toLowerCase()) ||
         ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-        ticket.reporter.toLowerCase().includes(search.toLowerCase())
+        (ticket.requester_name || "").toLowerCase().includes(search.toLowerCase())
       );
     })
     .sort((a, b) => {
       if (sortBy === "priority") {
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
+        return (
+          (priorityOrder[b.ticket_priority] || 0) -
+          (priorityOrder[a.ticket_priority] || 0)
+        );
       }
 
       if (sortBy === "oldest") {
         return (
-          new Date(a.updatedAt).getTime() -
-          new Date(b.updatedAt).getTime()
+          new Date(a.updated_at || a.created_at).getTime() -
+          new Date(b.updated_at || b.created_at).getTime()
         );
       }
 
       return (
-        new Date(b.updatedAt).getTime() -
-        new Date(a.updatedAt).getTime()
+        new Date(b.updated_at || b.created_at).getTime() -
+        new Date(a.updated_at || a.created_at).getTime()
       );
     });
 
@@ -92,15 +75,19 @@ const AssignedTickets = () => {
     });
   };
 
+  if (error && !loading) {
+    showToast(error, "error");
+  }
+
   return (
     <div className="space-y-6">
+      {toastElement}
 
       {/* Page Heading */}
       <div>
         <h1 className="text-2xl font-bold text-body-text">
           Assigned Tickets
         </h1>
-
         <p className="mt-1 text-sm text-gray-500">
           View and manage tickets assigned to you.
         </p>
@@ -108,115 +95,110 @@ const AssignedTickets = () => {
 
       {/* Search and Sorting */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
         <input
+          id="assigned-search"
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by ID, title or reporter..."
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:border-[#6A89A7] sm:max-w-md"
+          placeholder="Search by ID, title or reporter…"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:border-[#6A89A7] sm:max-w-md transition-colors"
         />
 
         <select
+          id="assigned-sort"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:border-[#6A89A7]"
+          className="rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:border-[#6A89A7] transition-colors"
         >
           <option value="newest">Recently Updated</option>
           <option value="oldest">Oldest Updated</option>
-          <option value="priority">Priority: Critical to Low</option>
+          <option value="priority">Priority: High to Low</option>
         </select>
-
       </div>
+
+      {/* Loading State */}
+      {loading && (
+            <Loader/>
+
+      )}
 
       {/* Assigned Ticket Cards */}
-      <div className="space-y-3">
+      {!loading && (
+        <div className="space-y-3">
+          {filteredTickets.length > 0 ? (
+            filteredTickets.map((ticket: Ticket) => (
+              <div
+                key={ticket.ticket_id}
+                className="flex flex-col gap-3 rounded-md border border-gray-300 bg-white p-4 transition hover:border-[#6A89A7] hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
+              >
+                {/* Ticket Information */}
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500">
+                    HD-{ticket.ticket_id}
+                  </p>
 
-        {filteredTickets.length > 0 ? (
-          filteredTickets.map((ticket) => (
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    {ticket.title}
+                  </h3>
 
-            <div
-              key={ticket.id}
-              className="flex flex-col gap-3 rounded-md border border-gray-300 bg-white p-4 transition hover:border-[#6A89A7] hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
-            >
+                  <p className="text-xs text-gray-500">
+                    Reporter: {ticket.requester_name || "Unknown"}
+                  </p>
 
-              {/* Ticket Information */}
-              <div className="space-y-1">
+                  <p className="text-xs text-gray-500">
+                    Last updated: {formatDate(ticket.updated_at || ticket.created_at)}
+                  </p>
+                </div>
 
-                <p className="text-xs font-medium text-gray-500">
-                  {ticket.id}
-                </p>
+                {/* Priority and Status */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-sm px-3 py-1 text-xs font-medium ${
+                      ticket.ticket_priority === "High"
+                        ? "bg-red-50 text-red-600"
+                        : ticket.ticket_priority === "Medium"
+                        ? "bg-yellow-50 text-yellow-700"
+                        : "bg-green-50 text-green-700"
+                    }`}
+                  >
+                    {ticket.ticket_priority}
+                  </span>
 
-                <h3 className="text-sm font-semibold text-gray-800">
-                  {ticket.title}
-                </h3>
-
-                <p className="text-xs text-gray-500">
-                  Reporter: {ticket.reporter}
-                </p>
-
-                <p className="text-xs text-gray-500">
-                  Last updated: {formatDate(ticket.updatedAt)}
-                </p>
-
+                  <span
+                    className={`rounded-sm px-3 py-1 text-xs font-medium ${
+                      ticket.ticket_status === "In progress"
+                        ? "bg-blue-50 text-[#6A89A7]"
+                        : ticket.ticket_status === "Pending approval"
+                        ? "bg-yellow-50 text-yellow-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {ticket.ticket_status}
+                  </span>
+                </div>
               </div>
-
-              {/* Priority and Status */}
-              <div className="flex flex-wrap items-center gap-2">
-
-                <span
-                  className={`rounded-sm px-3 py-1 text-xs font-medium ${
-                    ticket.priority === "Critical" ||
-                    ticket.priority === "High"
-                      ? "bg-red-50 text-red-600"
-                      : ticket.priority === "Medium"
-                      ? "bg-yellow-50 text-yellow-700"
-                      : "bg-green-50 text-green-700"
-                  }`}
-                >
-                  {ticket.priority}
-                </span>
-
-                <span
-                  className={`rounded-sm px-3 py-1 text-xs font-medium ${
-                    ticket.status === "In Progress"
-                      ? "bg-blue-50 text-[#6A89A7]"
-                      : ticket.status === "On Hold"
-                      ? "bg-yellow-50 text-yellow-700"
-                      : ticket.status === "Pending User Response"
-                      ? "bg-orange-50 text-orange-700"
-                      : "bg-green-50 text-green-700"
-                  }`}
-                >
-                  {ticket.status}
-                </span>
-
-              </div>
-
+            ))
+          ) : (
+            <div className="rounded-md border border-dashed border-gray-300 p-10 text-center">
+              <p className="text-sm font-medium text-gray-700">
+                No assigned tickets found.
+              </p>
+              <p className="mt-2 text-sm text-gray-500">
+                {activeTickets.length === 0
+                  ? "You don't have any active tickets. Claim one from the ticket queue!"
+                  : "No tickets match your current search."}
+              </p>
             </div>
-
-          ))
-        ) : (
-
-          <div className="rounded-md border border-dashed border-gray-300 p-10 text-center">
-            <p className="text-sm font-medium text-gray-700">
-              No assigned tickets found.
-            </p>
-
-            <p className="mt-2 text-sm text-gray-500">
-              You currently have no tickets matching your search.
-            </p>
-          </div>
-
-        )}
-
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Ticket Count */}
-      <p className="text-xs text-gray-500">
-        Showing {filteredTickets.length} of {tickets.length} assigned tickets
-      </p>
-
+      {!loading && activeTickets.length > 0 && (
+        <p className="text-xs text-gray-500">
+          Showing {filteredTickets.length} of {activeTickets.length} assigned tickets
+        </p>
+      )}
     </div>
   );
 };

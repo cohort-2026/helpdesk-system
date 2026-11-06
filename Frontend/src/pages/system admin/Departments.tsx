@@ -183,7 +183,7 @@ const Departments = () => {
       />
 
       {/* Dialog for Creating a new Department */}
-      <DepartmentDialog
+         <DepartmentDialog
         ref={createDialogRef}
         onSuccess={() => {
           showNotification("success", "Department created successfully.");
@@ -192,7 +192,7 @@ const Departments = () => {
       />
 
       {/* Dialog for Editing an existing Department */}
-      <DepartmentDialog
+        <DepartmentDialog
         ref={editDialogRef}
         departmentToEdit={editingDepartment}
         onClose={handleCloseEdit}
