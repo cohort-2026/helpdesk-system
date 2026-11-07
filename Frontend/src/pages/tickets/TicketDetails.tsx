@@ -45,15 +45,7 @@ export default function TicketDetails() {
 
   const [ticket, setTicket] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: 1,
-      author: "Lindiwe Jobe",
-      body: "Checking budget approval with Finance.",
-      isInternal: true,
-      createdAt: "Just now",
-    },
-  ]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [toast, setToast] = useState("");
