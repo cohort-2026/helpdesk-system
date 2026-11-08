@@ -142,7 +142,8 @@ export const fetchUser = async (req: Request, res: Response, next: NextFunction)
             return res.status(403).json({ message: "You do not have permission to view users." });
         }
 
-        const id = req.params.id || (req.query.id as string);
+        const rawId = req.params.id || (req.query.id as string);
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
         if (id) {
             const user = await userServices.findById(id);
             if (!user || !allowedRoles.includes(user.role)) {
@@ -170,7 +171,8 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
             return res.status(401).json({ message: "Not authenticated" });
         }
 
-        const id = req.params.id;
+        const rawId = req.params.id;
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
         if (!id) {
             return res.status(400).json({ message: "User ID is required." });
         }
@@ -198,7 +200,8 @@ export const deactivateUser = async (req: Request, res: Response, next: NextFunc
             return res.status(401).json({ message: "Not authenticated" });
         }
 
-        const id = req.params.id;
+        const rawId = req.params.id;
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
         if (!id) {
             return res.status(400).json({ message: "User ID is required." });
         }

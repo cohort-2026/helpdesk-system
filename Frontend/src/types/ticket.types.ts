@@ -17,6 +17,41 @@ export const VALID_STATUSES: TicketStatus[] = [
   "Cancelled",
 ];
 
+export interface TicketComment {
+  comment_id: number;
+  ticket_id: number;
+  author_id: string;
+  body: string;
+  is_internal: boolean;
+  created_at: string;
+  updated_at?: string;
+  author_name?: string;
+  author_email?: string;
+  author_role?: string;
+}
+
+export interface TicketFeedback {
+  feedback_id: number;
+  ticket_id: number;
+  user_id: string;
+  rating: number;
+  comment?: string | null;
+  created_at: string;
+  updated_at?: string;
+  user_name?: string;
+  user_email?: string;
+}
+
+export interface AgentUser {
+  user_id: string;
+  name: string;
+  surname?: string;
+  email: string;
+  role: string;
+  department_id?: number | null;
+  department_name?: string | null;
+}
+
 export interface Ticket {
   ticket_id: number;
   title: string;
@@ -38,6 +73,8 @@ export interface Ticket {
   requester_email?: string | null;
   assignee_name?: string | null;
   assignee_email?: string | null;
+  comments?: TicketComment[];
+  feedback?: TicketFeedback | null;
 }
 
 export interface CreateTicketPayload {
