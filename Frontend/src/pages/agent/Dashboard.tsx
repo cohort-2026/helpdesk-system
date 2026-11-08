@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useTickets } from "../../hooks/useTickets";
 import { useToast } from "../../components/ui/Toast";
 import type { Ticket } from "../../types/ticket.types";
@@ -8,6 +9,7 @@ import Loader from "../../components/ui/Loader";
 const AgentDashboard = () => {
   const { user } = useAuth();
   const { toastElement, showToast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("my");
   const [claimingId, setClaimingId] = useState<number | null>(null);
 
@@ -48,15 +50,15 @@ const AgentDashboard = () => {
     (t) =>
       t.ticket_status !== "Resolved" &&
       t.ticket_status !== "Closed" &&
-      t.ticket_status !== "Cancelled"
+      t.ticket_status !== "Cancelled",
   );
 
   const resolvedByMe = myTickets.filter(
-    (t) => t.ticket_status === "Resolved" || t.ticket_status === "Closed"
+    (t) => t.ticket_status === "Resolved" || t.ticket_status === "Closed",
   );
 
   const unassigned = deptTickets.filter(
-    (t) => !t.assignee_id || t.assignee_id === null
+    (t) => !t.assignee_id || t.assignee_id === null,
   );
 
   const handleClaim = useCallback(
@@ -72,7 +74,7 @@ const AgentDashboard = () => {
         if (error.statusCode === 409) {
           showToast(
             "This ticket was already claimed by another agent.",
-            "warning"
+            "warning",
           );
           refetchDept();
         } else {
@@ -82,7 +84,7 @@ const AgentDashboard = () => {
         setClaimingId(null);
       }
     },
-    [claimTicket, showToast, refetchMy, refetchDept]
+    [claimTicket, showToast, refetchMy, refetchDept],
   );
 
   const tabs = [
@@ -135,10 +137,7 @@ const AgentDashboard = () => {
       </div>
 
       {/* Loading State */}
-      {isLoading && (
-             <Loader/>
-
-      )}
+      {isLoading && <Loader />}
 
       {/* Ticket Cards */}
       {!isLoading && (
@@ -147,6 +146,8 @@ const AgentDashboard = () => {
             displayTickets.map((ticket: Ticket) => (
               <div
                 key={ticket.ticket_id}
+                onClick={() => navigate(`/agent/tickets/${ticket.ticket_id}`)}
+                style={{ cursor: "pointer" }}
                 className="flex flex-col gap-3 rounded-md border border-gray-300 bg-white p-4 transition hover:border-[#6A89A7] hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 {/* Ticket Information */}
@@ -179,8 +180,8 @@ const AgentDashboard = () => {
                       ticket.ticket_priority === "High"
                         ? "bg-red-50 text-red-600"
                         : ticket.ticket_priority === "Medium"
-                        ? "bg-yellow-50 text-yellow-700"
-                        : "bg-green-50 text-green-700"
+                          ? "bg-yellow-50 text-yellow-700"
+                          : "bg-green-50 text-green-700"
                     }`}
                   >
                     {ticket.ticket_priority}
@@ -191,11 +192,11 @@ const AgentDashboard = () => {
                       ticket.ticket_status === "Open"
                         ? "bg-gray-100 text-gray-700"
                         : ticket.ticket_status === "In progress"
-                        ? "bg-blue-50 text-[#6A89A7]"
-                        : ticket.ticket_status === "Resolved" ||
-                          ticket.ticket_status === "Closed"
-                        ? "bg-green-50 text-green-700"
-                        : "bg-gray-100 text-gray-700"
+                          ? "bg-blue-50 text-[#6A89A7]"
+                          : ticket.ticket_status === "Resolved" ||
+                              ticket.ticket_status === "Closed"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {ticket.ticket_status}
