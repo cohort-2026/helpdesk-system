@@ -11,7 +11,7 @@ import type {
   AgentUser,
 } from "../types/ticket.types";
 
-const API = "http://localhost:5000/api";
+const API = `${import.meta.env.VITE_API_URL}/api`;
 
 const api = axios.create({
   baseURL: API,

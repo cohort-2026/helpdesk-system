@@ -65,7 +65,7 @@ export interface UsersContextType {
   clearError: () => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api/users';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/users`;
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
 
