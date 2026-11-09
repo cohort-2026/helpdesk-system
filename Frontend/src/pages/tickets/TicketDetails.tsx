@@ -12,18 +12,29 @@ import {
   approveTicket,
   rejectTicket,
   assignTicket,
-  fetchAgents
+  fetchAgents,
 } from "../../services/ticketService";
-import type { Ticket, TicketComment, TicketFeedback, AgentUser } from "../../types/ticket.types";
+import type {
+  Ticket,
+  TicketComment,
+  TicketFeedback,
+  AgentUser,
+} from "../../types/ticket.types";
+import Loader from "../../components/ui/Loader";
+import { Button } from "../../components/ui/Button";
 
 function normalizeRole(user: any): string {
-  const raw = user?.role ?? user?.user_role ?? user?.role_name ?? user?.userRole ?? "";
+  const raw =
+    user?.role ?? user?.user_role ?? user?.role_name ?? user?.userRole ?? "";
   const r = String(raw).trim().toLowerCase();
 
-  if (r === "system admin" || r === "system_admin" || r === "sysadmin") return "System Admin";
+  if (r === "system admin" || r === "system_admin" || r === "sysadmin")
+    return "System Admin";
   if (r === "platform admin" || r === "platform_admin") return "Platform Admin";
-  if (r === "department lead" || r === "department_lead" || r === "lead") return "Department Lead";
-  if (r === "agent" || r === "support agent" || r === "support_agent") return "Agent";
+  if (r === "department lead" || r === "department_lead" || r === "lead")
+    return "Department Lead";
+  if (r === "agent" || r === "support agent" || r === "support_agent")
+    return "Agent";
   if (r === "employee") return "Employee";
   if (r === "admin") return "System Admin";
   return "Employee";
@@ -67,9 +78,15 @@ export default function TicketDetails() {
 
   // Actions loading state
   const [actionLoading, setActionLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   };
@@ -109,7 +126,9 @@ export default function TicketDetails() {
       // If lead or admin, fetch agent list for reassignment
       if (canReassign) {
         try {
-          const agentList = await fetchAgents(data.ticket_department_id ?? undefined);
+          const agentList = await fetchAgents(
+            data.ticket_department_id ?? undefined,
+          );
           setAgents(agentList);
         } catch (err) {
           console.warn("Could not load agents list:", err);
@@ -132,7 +151,8 @@ export default function TicketDetails() {
     if (isAdmin) return true;
     if (String(c.author_id) === currentUserId) {
       // Configurable 15 minute window check
-      const ageMinutes = (Date.now() - new Date(c.created_at).getTime()) / (1000 * 60);
+      const ageMinutes =
+        (Date.now() - new Date(c.created_at).getTime()) / (1000 * 60);
       return ageMinutes <= 15;
     }
     return false;
@@ -148,12 +168,16 @@ export default function TicketDetails() {
       const created = await addTicketComment(
         ticket.ticket_id,
         newComment.trim(),
-        canAddInternal ? isInternalNote : false
+        canAddInternal ? isInternalNote : false,
       );
       setComments((prev) => [...prev, created]);
       setNewComment("");
       setIsInternalNote(false);
-      showToast(created.is_internal ? "Internal note posted successfully" : "Comment posted successfully");
+      showToast(
+        created.is_internal
+          ? "Internal note posted successfully"
+          : "Comment posted successfully",
+      );
     } catch (err: any) {
       showToast(err.message || "Failed to post comment", "error");
     } finally {
@@ -174,7 +198,11 @@ export default function TicketDetails() {
     try {
       const updated = await updateComment(commentId, editingCommentText.trim());
       setComments((prev) =>
-        prev.map((c) => (c.comment_id === commentId ? { ...c, body: updated.body, updated_at: updated.updated_at } : c))
+        prev.map((c) =>
+          c.comment_id === commentId
+            ? { ...c, body: updated.body, updated_at: updated.updated_at }
+            : c,
+        ),
       );
       setEditingCommentId(null);
       setEditingCommentText("");
@@ -188,7 +216,8 @@ export default function TicketDetails() {
 
   // Delete Comment
   const handleDeleteComment = async (commentId: number) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+    if (!window.confirm("Are you sure you want to delete this comment?"))
+      return;
     try {
       await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.comment_id !== commentId));
@@ -212,7 +241,7 @@ export default function TicketDetails() {
       const submitted = await submitTicketFeedback(
         ticket.ticket_id,
         starRating,
-        feedbackComment.trim() || undefined
+        feedbackComment.trim() || undefined,
       );
       setFeedback(submitted);
       showToast("Thank you! Feedback submitted successfully.");
@@ -229,7 +258,9 @@ export default function TicketDetails() {
     setActionLoading(true);
     try {
       const updated = await updateTicketStatus(ticket.ticket_id, newStatus);
-      setTicket((prev) => (prev ? { ...prev, ticket_status: updated.ticket_status } : null));
+      setTicket((prev) =>
+        prev ? { ...prev, ticket_status: updated.ticket_status } : null,
+      );
       showToast(`Status updated to "${newStatus}"`);
       // Reload comments to catch any system audit notes
       const updatedComments = await fetchTicketComments(ticket.ticket_id);
@@ -248,7 +279,9 @@ export default function TicketDetails() {
     setActionLoading(true);
     try {
       const updated = await approveTicket(ticket.ticket_id, note);
-      setTicket((prev) => (prev ? { ...prev, ticket_status: updated.ticket_status } : null));
+      setTicket((prev) =>
+        prev ? { ...prev, ticket_status: updated.ticket_status } : null,
+      );
       showToast("Ticket approved successfully!");
       const updatedComments = await fetchTicketComments(ticket.ticket_id);
       setComments(updatedComments);
@@ -268,7 +301,9 @@ export default function TicketDetails() {
     setActionLoading(true);
     try {
       const updated = await rejectTicket(ticket.ticket_id, reason || undefined);
-      setTicket((prev) => (prev ? { ...prev, ticket_status: updated.ticket_status } : null));
+      setTicket((prev) =>
+        prev ? { ...prev, ticket_status: updated.ticket_status } : null,
+      );
       showToast("Ticket rejected.", "error");
       const updatedComments = await fetchTicketComments(ticket.ticket_id);
       setComments(updatedComments);
@@ -294,11 +329,13 @@ export default function TicketDetails() {
               assignee_id: updated.assignee_id,
               assignee_name: updated.assignee_name,
               assignee_email: updated.assignee_email,
-              ticket_status: updated.ticket_status
+              ticket_status: updated.ticket_status,
             }
-          : null
+          : null,
       );
-      showToast(`Ticket reassigned to ${updated.assignee_name || "selected agent"}`);
+      showToast(
+        `Ticket reassigned to ${updated.assignee_name || "selected agent"}`,
+      );
     } catch (err: any) {
       showToast(err.message || "Failed to reassign ticket", "error");
     } finally {
@@ -313,24 +350,15 @@ export default function TicketDetails() {
 
   // Loading skeleton
   if (loading) {
-    return (
-      <div className="p-6 space-y-4 max-w-4xl mx-auto">
-        <div className="h-8 bg-gray-200 rounded animate-pulse w-2/3" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-1/3" />
-        <div className="bg-white rounded-lg shadow p-6 space-y-3">
-          <div className="h-4 bg-gray-200 rounded animate-pulse" />
-          <div className="h-4 bg-gray-200 rounded animate-pulse" />
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 h-40 animate-pulse" />
-      </div>
-    );
+    return <Loader />;
   }
 
   if (!ticket) {
     return (
       <div className="p-6 max-w-4xl mx-auto text-center py-12">
-        <p className="text-gray-600 text-lg">Ticket not found or you are not authorized to view it.</p>
+        <p className="text-gray-600 text-lg">
+          Ticket not found or you are not authorized to view it.
+        </p>
         <button
           onClick={() => navigate(-1)}
           className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:underline"
@@ -356,19 +384,19 @@ export default function TicketDetails() {
     ticket.ticket_priority === "High"
       ? "bg-red-100 text-red-800 border-red-200"
       : ticket.ticket_priority === "Medium"
-      ? "bg-amber-100 text-amber-800 border-amber-200"
-      : "bg-blue-100 text-blue-800 border-blue-200";
+        ? "bg-amber-100 text-amber-800 border-amber-200"
+        : "bg-blue-100 text-blue-800 border-blue-200";
 
   const statusColor =
     isResolved || isClosed
       ? "bg-green-100 text-green-800 border-green-200"
       : isPendingApproval
-      ? "bg-purple-100 text-purple-800 border-purple-200"
-      : isInProgress
-      ? "bg-blue-100 text-blue-800 border-blue-200"
-      : normalizedStatus === "cancelled"
-      ? "bg-gray-100 text-gray-800 border-gray-300"
-      : "bg-amber-100 text-amber-800 border-amber-200";
+        ? "bg-purple-100 text-purple-800 border-purple-200"
+        : isInProgress
+          ? "bg-blue-100 text-blue-800 border-blue-200"
+          : normalizedStatus === "cancelled"
+            ? "bg-gray-100 text-gray-800 border-gray-300"
+            : "bg-amber-100 text-amber-800 border-amber-200";
 
   const formattedDate = (dateVal?: string | Date) => {
     if (!dateVal) return "-";
@@ -377,7 +405,7 @@ export default function TicketDetails() {
       month: "short",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
@@ -387,13 +415,17 @@ export default function TicketDetails() {
       {toast && (
         <div
           className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-md shadow-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-            toast.type === "error" ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
+            toast.type === "error"
+              ? "bg-red-600 text-white"
+              : "bg-emerald-600 text-white"
           }`}
         >
           {toast.type === "error" ? "⚠️" : "✓"} {toast.message}
         </div>
       )}
-
+      <div className="flex items-center gap-2">
+        <h1 className="text-xl font-bold text-body-text">Ticket Details</h1>
+      </div>
       {/* Back button */}
       <div>
         <button
@@ -411,27 +443,35 @@ export default function TicketDetails() {
             <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-700">
               HD-{ticket.ticket_id}
             </span>
-            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${priorityColor}`}>
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 border ${priorityColor}`}
+            >
               {ticket.ticket_priority} Priority
             </span>
-            <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${statusColor}`}>
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 border ${statusColor}`}
+            >
               {ticket.ticket_status}
             </span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mt-2">{ticket.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-2">
+            {ticket.title}
+          </h1>
         </div>
 
         {/* Quick Action Buttons for Agents & Admins */}
         {canChangeStatus && (
           <div className="flex flex-wrap items-center gap-2">
             {isOpen && (
-              <button
+              <Button
+                type="button"
+                variant="secondary"
                 disabled={actionLoading}
                 onClick={() => handleStatusChange("In progress")}
-                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md shadow-sm transition disabled:opacity-50"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-sm transition disabled:opacity-50"
               >
-                Start Work
-              </button>
+                Assign to Me
+              </Button>
             )}
             {isInProgress && (
               <button
@@ -468,9 +508,12 @@ export default function TicketDetails() {
       {isPendingApproval && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-purple-900">Request Pending Approval</h3>
+            <h3 className="text-sm font-semibold text-purple-900">
+              Request Pending Approval
+            </h3>
             <p className="text-xs text-purple-700 mt-0.5">
-              This request requires Department Lead review and authorization before work can proceed.
+              This request requires Department Lead review and authorization
+              before work can proceed.
             </p>
           </div>
           {canApproveReject ? (
@@ -500,55 +543,93 @@ export default function TicketDetails() {
 
       {/* Ticket Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
-        <h2 className="text-base font-semibold text-gray-900">Ticket Information</h2>
+        <h2 className="text-base font-semibold text-gray-900">
+          Ticket Information
+        </h2>
         {ticket.description ? (
           <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-md border border-gray-100">
             {ticket.description}
           </p>
         ) : (
-          <p className="text-sm text-gray-400 italic">No description provided.</p>
+          <p className="text-sm text-gray-400 italic">
+            No description provided.
+          </p>
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm pt-2">
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Department</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{ticket.department_name || "-"}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Department
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {ticket.department_name || "-"}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Category</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{ticket.category_name || "-"}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Category
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {ticket.category_name || "-"}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Request Type</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{ticket.request_type_name || "-"}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Request Type
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {ticket.request_type_name || "-"}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Created</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{formattedDate(ticket.created_at)}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {formattedDate(ticket.created_at)}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{ticket.requester_name || "Unknown"}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Requester
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {ticket.requester_name || "Unknown"}
+            </p>
             {ticket.requester_email && (
               <p className="text-xs text-gray-500">{ticket.requester_email}</p>
             )}
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Agent</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Assigned Agent
+            </p>
             <p className="font-semibold text-gray-800 mt-0.5">
-              {ticket.assignee_name ? ticket.assignee_name : <span className="text-amber-600 font-normal">Unassigned</span>}
+              {ticket.assignee_name ? (
+                ticket.assignee_name
+              ) : (
+                <span className="text-amber-600 font-normal">Unassigned</span>
+              )}
             </p>
             {ticket.assignee_email && (
               <p className="text-xs text-gray-500">{ticket.assignee_email}</p>
             )}
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{ticket.ticket_priority}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Priority
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {ticket.ticket_priority}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</p>
-            <p className="font-semibold text-gray-800 mt-0.5">{ticket.ticket_status}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </p>
+            <p className="font-semibold text-gray-800 mt-0.5">
+              {ticket.ticket_status}
+            </p>
           </div>
         </div>
       </div>
@@ -558,14 +639,13 @@ export default function TicketDetails() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
           <h2 className="text-base font-semibold text-gray-900 flex items-center justify-between">
             <span>Management & Status Actions</span>
-            <span className="text-xs font-normal text-gray-500">Authorized Support Staff Only</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Quick Status Select */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Update Ticket Status (Quick Select)
+                Update Ticket Status
               </label>
               <select
                 value={ticket.ticket_status}
@@ -585,7 +665,7 @@ export default function TicketDetails() {
             {canReassign && (
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Reassign to Agent (Department Lead Action)
+                  Reassign to Agent
                 </label>
                 <select
                   value={ticket.assignee_id || ""}
@@ -594,11 +674,14 @@ export default function TicketDetails() {
                   className="w-full border border-gray-300 rounded-md p-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                 >
                   <option value="">Select support agent...</option>
-                  {agents.map((ag) => (
-                    <option key={ag.user_id} value={ag.user_id}>
-                      {ag.name} {ag.surname ? ag.surname : ""} ({ag.role}) - {ag.email}
-                    </option>
-                  ))}
+                  {agents
+                    .filter((ag) => ag.role === "Agent")
+                    .map((ag) => (
+                      <option key={ag.user_id} value={ag.user_id}>
+                        {ag.name} {ag.surname ? ag.surname : ""} ({ag.role}) -{" "}
+                        {ag.email}
+                      </option>
+                    ))}
                 </select>
               </div>
             )}
@@ -611,10 +694,8 @@ export default function TicketDetails() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-              <span>⭐ Resolution Feedback</span>
-              <span className="text-xs font-normal bg-green-100 text-green-800 px-2.5 py-0.5 rounded-full font-medium">
-                Ticket Resolved
-              </span>
+              <span>Resolution Feedback</span>
+           
             </h2>
             {feedback && (
               <span className="text-xs text-gray-500">
@@ -627,7 +708,9 @@ export default function TicketDetails() {
             /* Display submitted feedback */
             <div className="bg-emerald-50 border border-emerald-200 rounded-md p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-800">Quality Rating:</span>
+                <span className="text-sm font-semibold text-gray-800">
+                  Quality Rating:
+                </span>
                 <div className="flex items-center text-amber-500 text-lg">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span key={star}>
@@ -645,14 +728,20 @@ export default function TicketDetails() {
                 </p>
               )}
               {feedback.user_name && (
-                <p className="text-xs text-emerald-700">Provided by {feedback.user_name}</p>
+                <p className="text-xs text-emerald-700">
+                  Provided by {feedback.user_name}
+                </p>
               )}
             </div>
           ) : isTicketRequester ? (
             /* Requester can submit feedback */
-            <form onSubmit={handleSubmitFeedback} className="space-y-4 bg-gray-50 p-4 rounded-md border border-gray-200">
+            <form
+              onSubmit={handleSubmitFeedback}
+              className="space-y-4 bg-gray-50 p-4 rounded-md border border-gray-200"
+            >
               <p className="text-sm text-gray-700">
-                This ticket has been marked as resolved. How satisfied are you with the resolution provided by our support team?
+                How satisfied are you
+                with the resolution provided by our support team?
               </p>
 
               {/* Star Rating Selector */}
@@ -674,7 +763,9 @@ export default function TicketDetails() {
                     </button>
                   ))}
                   <span className="text-xs font-medium text-gray-600 ml-2">
-                    {starRating > 0 ? `${starRating} Star${starRating > 1 ? "s" : ""}` : "Click a star to rate"}
+                    {starRating > 0
+                      ? `${starRating} Star${starRating > 1 ? "s" : ""}`
+                      : "Click a star to rate"}
                   </span>
                 </div>
               </div>
@@ -698,12 +789,15 @@ export default function TicketDetails() {
                 disabled={submittingFeedback || starRating === 0}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow transition disabled:opacity-50"
               >
-                {submittingFeedback ? "Submitting..." : "Submit Resolution Feedback"}
+                {submittingFeedback
+                  ? "Submitting..."
+                  : "Submit Resolution Feedback"}
               </button>
             </form>
           ) : (
             <p className="text-sm text-gray-500 italic">
-              Awaiting resolution feedback from ticket requester ({ticket.requester_name || "Employee"}).
+              Awaiting resolution feedback from ticket requester (
+              {ticket.requester_name || "Employee"}).
             </p>
           )}
         </div>
@@ -713,14 +807,15 @@ export default function TicketDetails() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
         <div className="flex items-center justify-between pb-3 border-b">
           <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <span>💬 Ticket Communication</span>
+            <span>Ticket Communication</span>
             <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-              {visibleComments.length} {visibleComments.length === 1 ? "message" : "messages"}
+              {visibleComments.length}{" "}
+              {visibleComments.length === 1 ? "message" : "messages"}
             </span>
           </h2>
           {canSeeInternal && (
             <span className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
-              🔒 Internal Notes visible to you
+              Internal Notes visible to you
             </span>
           )}
         </div>
@@ -745,8 +840,8 @@ export default function TicketDetails() {
                     isInternal
                       ? "bg-amber-50/80 border-amber-300 shadow-xs"
                       : isAuthor
-                      ? "bg-blue-50/50 border-blue-200"
-                      : "bg-gray-50/80 border-gray-200"
+                        ? "bg-blue-50/50 border-blue-200"
+                        : "bg-gray-50/80 border-gray-200"
                   }`}
                 >
                   {/* Comment Author Header */}
@@ -762,7 +857,7 @@ export default function TicketDetails() {
                       )}
                       {isInternal && (
                         <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-semibold flex items-center gap-1">
-                          🔒 Internal Note
+                          Internal Note
                         </span>
                       )}
                       {isAuthor && (
@@ -772,7 +867,9 @@ export default function TicketDetails() {
                       )}
                       <span className="text-xs text-gray-400">
                         {formattedDate(c.created_at)}
-                        {c.updated_at && c.updated_at !== c.created_at && " (edited)"}
+                        {c.updated_at &&
+                          c.updated_at !== c.created_at &&
+                          " (edited)"}
                       </span>
                     </div>
 
@@ -838,7 +935,9 @@ export default function TicketDetails() {
         <form onSubmit={handleAddComment} className="pt-4 border-t space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              {canAddInternal && isInternalNote ? "Post Internal Note (Staff Only)" : "Post a Comment"}
+              {canAddInternal && isInternalNote
+                ? "Post Internal Note (Staff Only)"
+                : "Post a Comment"}
             </label>
             {canAddInternal && (
               <label className="flex items-center gap-2 text-xs font-medium text-amber-800 cursor-pointer bg-amber-50 px-2.5 py-1 rounded border border-amber-200 hover:bg-amber-100 transition">
@@ -848,7 +947,7 @@ export default function TicketDetails() {
                   onChange={(e) => setIsInternalNote(e.target.checked)}
                   className="rounded text-amber-600 focus:ring-amber-500"
                 />
-                🔒 Internal Note (hidden from requester)
+                Internal Note
               </label>
             )}
           </div>
@@ -887,8 +986,8 @@ export default function TicketDetails() {
               {submittingComment
                 ? "Posting..."
                 : canAddInternal && isInternalNote
-                ? "Add Internal Note"
-                : "Post Comment"}
+                  ? "Add Internal Note"
+                  : "Post Comment"}
             </button>
           </div>
         </form>

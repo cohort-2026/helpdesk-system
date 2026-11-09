@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchTickets, approveTicket, rejectTicket } from "../../services/ticketService";
 import type { Ticket } from "../../types/ticket.types";
+import Loader from "../../components/ui/Loader";
+import { Button } from "../../components/ui/Button";
 
 export default function Approvals() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -82,24 +84,19 @@ export default function Approvals() {
             Review and execute Approve or Reject actions for employee requests pending authorization.
           </p>
         </div>
-        <button
+        <Button
+        variant="outline"
           onClick={loadPendingTickets}
-          className="px-3.5 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-md shadow-sm transition"
         >
           Refresh List
-        </button>
+        </Button>
       </div>
 
       {/* Table / List */}
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
-          ))}
-        </div>
+     <Loader/>
       ) : tickets.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div className="text-3xl mb-2">🎉</div>
           <h3 className="text-base font-semibold text-gray-800">All caught up!</h3>
           <p className="text-sm text-gray-500 mt-1">There are no requests currently pending approval.</p>
         </div>
