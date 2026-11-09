@@ -99,9 +99,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Loading State */}
-        {loading && (
-         <Loader/>
-        )}
+        {loading && <Loader />}
 
         {/* Ticket List */}
         {!loading && (
@@ -127,6 +125,7 @@ export default function EmployeeDashboard() {
                 {filtered.map((t: Ticket) => (
                   <div
                     key={t.ticket_id}
+                    onClick={() => navigate(`/employee/tickets/${t.ticket_id}`)}
                     className="flex justify-between items-center px-4 py-3 hover:bg-gray-50 transition-colors"
                   >
                     <div>
