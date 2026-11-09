@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Alert } from "../../components/ui/Alert";
 import axios from "axios";
+import { getApiMessage } from "../../utils/errors";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ const ForgotPasswordPage = () => {
 
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
+        `${import.meta.env.VITE_API_URL ?? ""}/api/auth/forgot-password`,
         { email },
         { withCredentials: true }
       );
@@ -28,9 +29,9 @@ const ForgotPasswordPage = () => {
       setMessage(
         "If an account exists with that email, a password reset link will be sent."
       );
-    } catch (err: any) {
+    } catch (err) {
       setError(
-        err.response?.data?.message ||
+        getApiMessage(err) ||
           "Unable to send the reset link. Please try again."
       );
     } finally {

@@ -11,7 +11,7 @@ import type {
   AgentUser,
 } from "../types/ticket.types";
 
-const API = `${import.meta.env.VITE_API_URL}/api`;
+const API = `${import.meta.env.VITE_API_URL ?? ""}/api`;
 
 const api = axios.create({
   baseURL: API,
@@ -49,7 +49,7 @@ export const createTicket = async (
     );
     return response.data.ticket;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -78,7 +78,7 @@ export const fetchTickets = async (
     });
     return response.data;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -91,7 +91,7 @@ export const fetchTicketById = async (id: number): Promise<Ticket> => {
     const response = await api.get<{ ticket: Ticket }>(`/tickets/${id}`);
     return response.data.ticket;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -130,7 +130,7 @@ export const assignTicket = async (
       enrichedError.statusCode = status;
       throw enrichedError;
     }
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -143,7 +143,7 @@ export const fetchTicketComments = async (ticketId: number): Promise<TicketComme
     const response = await api.get<{ comments: TicketComment[] }>(`/tickets/${ticketId}/comments`);
     return response.data.comments || [];
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -163,7 +163,7 @@ export const addTicketComment = async (
     );
     return response.data.comment;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -182,7 +182,7 @@ export const updateComment = async (
     );
     return response.data.comment;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -194,7 +194,7 @@ export const deleteComment = async (commentId: number): Promise<void> => {
   try {
     await api.delete(`/comments/${commentId}`);
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -214,7 +214,7 @@ export const submitTicketFeedback = async (
     );
     return response.data.feedback;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -227,7 +227,7 @@ export const fetchTicketFeedback = async (ticketId: number): Promise<TicketFeedb
     const response = await api.get<{ feedback: TicketFeedback | null }>(`/tickets/${ticketId}/feedback`);
     return response.data.feedback;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -246,7 +246,7 @@ export const updateTicketStatus = async (
     );
     return response.data.ticket;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -265,7 +265,7 @@ export const approveTicket = async (
     );
     return response.data.ticket;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -284,7 +284,7 @@ export const rejectTicket = async (
     );
     return response.data.ticket;
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };
 
@@ -298,6 +298,6 @@ export const fetchAgents = async (departmentId?: number): Promise<AgentUser[]> =
     const response = await api.get<{ agents: AgentUser[] }>("/tickets/agents", { params });
     return response.data.agents || [];
   } catch (error) {
-    throw new Error(extractErrorMessage(error));
+    throw new Error(extractErrorMessage(error), { cause: error });
   }
 };

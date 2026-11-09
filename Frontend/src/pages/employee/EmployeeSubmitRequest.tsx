@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../components/ui/Toast";
+import { useToast } from "../../hooks/useToast";
 import { useDepartments } from "../../hooks/useDepartments";
 import * as ticketService from "../../services/ticketService";
 import type { TicketPriority } from "../../types/ticket.types";
@@ -20,15 +20,10 @@ const EmployeeSubmitRequest = () => {
     priority: "Low" as TicketPriority,
   });
 
-  // Set default department_id to first department once loaded
-  useEffect(() => {
-    if (departments.length > 0 && !formData.department_id) {
-      setFormData((prev) => ({
-        ...prev,
-        department_id: String(departments[0].department_id),
-      }));
-    }
-  }, [departments, formData.department_id]);
+  // Default to the first department until the user picks one.
+  const departmentId =
+    formData.department_id ||
+    (departments.length > 0 ? String(departments[0].department_id) : "");
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -36,7 +31,7 @@ const EmployeeSubmitRequest = () => {
       e.title = "Subject must be at least 5 characters.";
     if (formData.title.trim().length > 255)
       e.title = "Subject must be 255 characters or fewer.";
-    if (!formData.department_id)
+    if (!departmentId)
       e.department_id = "Department must be selected.";
     if (!formData.description || formData.description.trim().length < 15)
       e.description = "Description must be at least 15 characters.";
@@ -53,8 +48,8 @@ const EmployeeSubmitRequest = () => {
         title: formData.title.trim(),
         description: formData.description.trim(),
         priority: formData.priority,
-        department_id: formData.department_id
-          ? Number(formData.department_id)
+        department_id: departmentId
+          ? Number(departmentId)
           : undefined,
       });
       showToast("Request submitted successfully!", "success");
@@ -89,7 +84,7 @@ const EmployeeSubmitRequest = () => {
               ) : (
                 <select
                   id="department-select"
-                  value={formData.department_id}
+                  value={departmentId}
                   onChange={(e) =>
                     setFormData({ ...formData, department_id: e.target.value })
                   }

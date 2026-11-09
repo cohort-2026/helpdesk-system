@@ -42,7 +42,6 @@
     "@types/pg": "^8.23.1",
     "nodemon": "^3.1.14",
     "tsx": "^4.23.13",
-    "typescipt": "^1.0.0",
     "typescript": "^7.0.2"
   }
 }

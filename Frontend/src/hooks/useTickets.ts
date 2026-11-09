@@ -110,10 +110,12 @@ export const useTickets = (options: UseTicketsOptions = {}) => {
     [fetchAll]
   );
 
-  // Auto-fetch on mount and when filters change
+  // Auto-fetch on mount and when filters change. State is only set after the
+  // request resolves; the rule can't see past the await and misreports this.
   useEffect(() => {
     if (autoFetch) {
       initialFetchDone.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchAll(false);
     }
   }, [fetchAll, autoFetch]);

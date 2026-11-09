@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTickets } from "../../hooks/useTickets";
-import { useToast } from "../../components/ui/Toast";
+import { useToast } from "../../hooks/useToast";
 import type { Ticket } from "../../types/ticket.types";
 import { Button } from "../../components/ui/Button";
 import { useNavigate } from "react-router-dom";

@@ -3,6 +3,7 @@ import { Button } from "./Button";
 import { Alert } from "./Alert";
 import { useDepartments, type Department } from "../../hooks/useDepartments";
 import { useUsers } from "../../context/UsersContext";
+import { getErrorMessage } from "../../utils/errors";
 
 interface DepartmentDialogProps {
   ref: React.RefObject<HTMLDialogElement | null>;
@@ -46,8 +47,18 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
     );
   }, [users]);
 
-    // Populate or reset form when modal opens or editing department changes
-  useEffect(() => {
+  // Populate or reset form when modal opens or editing department changes.
+  // Done during render (not in an effect) so the form never shows stale values.
+  const [formSource, setFormSource] = useState<{
+    department: Department | null | undefined;
+    isOpen: boolean | undefined;
+  } | null>(null);
+  if (
+    !formSource ||
+    formSource.department !== departmentToEdit ||
+    formSource.isOpen !== isOpen
+  ) {
+    setFormSource({ department: departmentToEdit, isOpen });
     if (departmentToEdit) {
       setDepartmentName(departmentToEdit.department_name || "");
       setDescription(departmentToEdit.description || "");
@@ -66,7 +77,7 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
     setNameError("");
     setErrorMessage("");
     setSuccessMessage("");
-  }, [departmentToEdit, isOpen]);
+  }
 
   const resetForm = () => {
     setDepartmentName("");
@@ -130,9 +141,12 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
       setTimeout(() => {
         closeModal();
       }, 700);
-    } catch (err: any) {
-      const msg = err.message || (isEditMode ? "Failed to update department" : "Failed to create department");
-      console.log("error submitting:", errorMessage)
+    } catch (err) {
+      const msg = getErrorMessage(
+        err,
+        isEditMode ? "Failed to update department" : "Failed to create department"
+      );
+      console.error("error submitting:", err);
       setErrorMessage(msg);
     }
   };
@@ -153,6 +167,9 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
 
         {successMessage && (
           <Alert variant="success" description={successMessage} />
+        )}
+        {errorMessage && (
+          <Alert variant="error" description={errorMessage} />
         )}
 
         <form

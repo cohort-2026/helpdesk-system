@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTickets } from "../../hooks/useTickets";
-import { useToast } from "../../components/ui/Toast";
+import { useToast } from "../../hooks/useToast";
 import type { Ticket } from "../../types/ticket.types";
 import Loader from "../../components/ui/Loader";
 

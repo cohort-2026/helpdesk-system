@@ -102,28 +102,3 @@ const Toast = ({ message, type = "info", duration = 4000, onClose }: ToastProps)
 };
 
 export default Toast;
-
-/**
- * Helper hook for managing toast notifications.
- * Returns a [toast, showToast] tuple.
- */
-export const useToast = () => {
-  const [toast, setToast] = useState<{
-    message: string;
-    type: ToastType;
-  } | null>(null);
-
-  const showToast = (message: string, type: ToastType = "info") => {
-    setToast({ message, type });
-  };
-
-  const toastElement = toast ? (
-    <Toast
-      message={toast.message}
-      type={toast.type}
-      onClose={() => setToast(null)}
-    />
-  ) : null;
-
-  return { toastElement, showToast };
-};

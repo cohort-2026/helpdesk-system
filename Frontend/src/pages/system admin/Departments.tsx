@@ -4,6 +4,7 @@ import { DepartmentDialog } from "../../components/ui/DepartmentDialog";
 import { Button } from "../../components/ui/Button";
 import { Alert } from "../../components/ui/Alert";
 import { useDepartments } from "../../hooks/useDepartments";
+import { getErrorMessage } from "../../utils/errors";
 
 const Departments = () => {
   const createDialogRef = useRef<HTMLDialogElement>(null);
@@ -59,8 +60,8 @@ const Departments = () => {
       await deleteDepartment(deptToDelete.department_id);
       showNotification("success", `Department "${deptToDelete.department_name}" deleted successfully.`);
       setDeletingDepartment(null);
-    } catch (err: any) {
-      showNotification("error", err.message || "Failed to delete department.");
+    } catch (err) {
+      showNotification("error", getErrorMessage(err, "Failed to delete department."));
     }
   };
 

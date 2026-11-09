@@ -33,14 +33,15 @@ const UserProfile: React.FC = () => {
     checkAuth();
   }, [checkAuth]);
 
-  // Sync form inputs with the user data in AuthContext
-  useEffect(() => {
-    if (user) {
-      setName(user.name || "");
-      setSurname(user.surname || "");
-      setEmail(user.email || "");
-    }
-  }, [user]);
+  // Sync form inputs with the user data in AuthContext whenever it changes.
+  // Done during render (not in an effect) so the form never shows stale values.
+  const [syncedUser, setSyncedUser] = useState<typeof user>(null);
+  if (user && user !== syncedUser) {
+    setSyncedUser(user);
+    setName(user.name || "");
+    setSurname(user.surname || "");
+    setEmail(user.email || "");
+  }
 
   const handleReset = () => {
     setName(user?.name || "");

@@ -9,6 +9,9 @@ export const pool = new Pool({
     database: process.env.DB_DATABASE,
     password: process.env.DB_PASSWORD,
     port: parseInt(process.env.DB_PORT || "26131"),
+    // Each serverless instance gets its own pool; keep it small so Vercel
+    // doesn't exhaust Aiven's connection limit.
+    max: process.env.VERCEL ? 1 : 10,
       ssl: process.env.DB_HOST === 'localhost' ? false : {
          rejectUnauthorized: false
       }

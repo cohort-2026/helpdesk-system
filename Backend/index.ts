@@ -35,4 +35,10 @@ const startServer = async () => {
   });
 };
 
-startServer();
+// On Vercel the app runs as a serverless function, so it must be exported
+// instead of listening on a port.
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

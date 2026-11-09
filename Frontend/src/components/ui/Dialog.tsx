@@ -13,15 +13,15 @@ export const Dialog = ({ ref }: DialogProps) => {
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>(allowedRoles[0] || "Employee");
+  const [selectedRole, setRole] = useState<UserRole>(allowedRoles[0] || "Employee");
   const [localError, setLocalError] = useState("");
 
-  // Keep role in sync with allowed roles when admin switches or loads
-  React.useEffect(() => {
-    if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
-      setRole(allowedRoles[0]);
-    }
-  }, [allowedRoles, role]);
+  // If the admin's allowed roles change and no longer include the selected
+  // role, fall back to the first allowed one.
+  const role: UserRole =
+    allowedRoles.length > 0 && !allowedRoles.includes(selectedRole)
+      ? allowedRoles[0]
+      : selectedRole;
 
   const closeModal = () => {
     setLocalError("");

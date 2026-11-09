@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Alert } from "../../components/ui/Alert";
 import axios from "axios";
+import { getApiMessage } from "../../utils/errors";
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ const ResetPasswordPage = () => {
 
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/reset-password`,
+        `${import.meta.env.VITE_API_URL ?? ""}/api/auth/reset-password`,
         { token, newPassword: password },
         { withCredentials: true }
       );
@@ -46,9 +47,9 @@ const ResetPasswordPage = () => {
       setTimeout(() => {
         navigate("/");
       }, 2000);
-    } catch (err: any) {
+    } catch (err) {
       setError(
-        err.response?.data?.message ||
+        getApiMessage(err) ||
           "Unable to reset your password. The link may have expired."
       );
     } finally {

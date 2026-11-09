@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Alert } from "../../components/ui/Alert";
 import axios from "axios";
+import { getApiMessage } from "../../utils/errors";
 
 const SignInPage = () => {
   const { login } = useAuth();
@@ -20,7 +21,7 @@ const SignInPage = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        `${import.meta.env.VITE_API_URL ?? ""}/api/auth/login`,
         { email, password },
         { withCredentials: true },
       );
@@ -49,9 +50,9 @@ const SignInPage = () => {
         default:
           navigate("/");
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(
-        err.response?.data?.message || "An error occurred during sign in.",
+        getApiMessage(err) || "An error occurred during sign in.",
       );
     }
   };

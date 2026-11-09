@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -22,8 +22,17 @@ import type {
 } from "../../types/ticket.types";
 import Loader from "../../components/ui/Loader";
 import { Button } from "../../components/ui/Button";
+import { getErrorMessage } from "../../utils/errors";
 
-function normalizeRole(user: any): string {
+// The role may arrive under different field names depending on the API response.
+type RoleSource = {
+  role?: string | null;
+  user_role?: string;
+  role_name?: string;
+  userRole?: string;
+} | null | undefined;
+
+function normalizeRole(user: RoleSource): string {
   const raw =
     user?.role ?? user?.user_role ?? user?.role_name ?? user?.userRole ?? "";
   const r = String(raw).trim().toLowerCase();
@@ -51,7 +60,7 @@ const ALL_STATUSES = [
 
 export default function TicketDetails() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth() as any;
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -83,13 +92,22 @@ export default function TicketDetails() {
     type: "success" | "error";
   } | null>(null);
 
-  const showToast = (
+  const showToast = useCallback((
     message: string,
     type: "success" | "error" = "success",
   ) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
-  };
+  }, []);
+
+  // Current time for the comment edit window, refreshed every minute so edit
+  // and delete buttons disappear once the window closes. (Reading Date.now()
+  // directly during render is impure.)
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Role permissions
   const userRole = normalizeRole(user);
@@ -109,7 +127,7 @@ export default function TicketDetails() {
   const canReassign = isLead || isAdmin;
 
   // Load ticket & comments
-  const loadTicketData = async () => {
+  const loadTicketData = useCallback(async () => {
     if (!id) return;
     try {
       const ticketIdNum = Number(id);
@@ -134,17 +152,20 @@ export default function TicketDetails() {
           console.warn("Could not load agents list:", err);
         }
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to load ticket:", err);
-      showToast(err.message || "Failed to load ticket details", "error");
+      showToast(getErrorMessage(err, "Failed to load ticket details"), "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, canReassign, showToast]);
 
+  // State is only set after the requests resolve; the rule can't see past
+  // the await and misreports this fetch-on-mount.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTicketData();
-  }, [id, userRole]);
+  }, [loadTicketData]);
 
   // Check if comment is editable/deletable by current user
   const canModifyComment = (c: TicketComment): boolean => {
@@ -152,7 +173,7 @@ export default function TicketDetails() {
     if (String(c.author_id) === currentUserId) {
       // Configurable 15 minute window check
       const ageMinutes =
-        (Date.now() - new Date(c.created_at).getTime()) / (1000 * 60);
+        (now - new Date(c.created_at).getTime()) / (1000 * 60);
       return ageMinutes <= 15;
     }
     return false;
@@ -178,8 +199,8 @@ export default function TicketDetails() {
           ? "Internal note posted successfully"
           : "Comment posted successfully",
       );
-    } catch (err: any) {
-      showToast(err.message || "Failed to post comment", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to post comment"), "error");
     } finally {
       setSubmittingComment(false);
     }
@@ -207,8 +228,8 @@ export default function TicketDetails() {
       setEditingCommentId(null);
       setEditingCommentText("");
       showToast("Comment updated successfully");
-    } catch (err: any) {
-      showToast(err.message || "Failed to edit comment", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to edit comment"), "error");
     } finally {
       setSavingEdit(false);
     }
@@ -222,8 +243,8 @@ export default function TicketDetails() {
       await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.comment_id !== commentId));
       showToast("Comment deleted successfully");
-    } catch (err: any) {
-      showToast(err.message || "Failed to delete comment", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to delete comment"), "error");
     }
   };
 
@@ -245,8 +266,8 @@ export default function TicketDetails() {
       );
       setFeedback(submitted);
       showToast("Thank you! Feedback submitted successfully.");
-    } catch (err: any) {
-      showToast(err.message || "Failed to submit feedback", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to submit feedback"), "error");
     } finally {
       setSubmittingFeedback(false);
     }
@@ -265,8 +286,8 @@ export default function TicketDetails() {
       // Reload comments to catch any system audit notes
       const updatedComments = await fetchTicketComments(ticket.ticket_id);
       setComments(updatedComments);
-    } catch (err: any) {
-      showToast(err.message || "Failed to update status", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to update status"), "error");
     } finally {
       setActionLoading(false);
     }
@@ -285,8 +306,8 @@ export default function TicketDetails() {
       showToast("Ticket approved successfully!");
       const updatedComments = await fetchTicketComments(ticket.ticket_id);
       setComments(updatedComments);
-    } catch (err: any) {
-      showToast(err.message || "Failed to approve ticket", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to approve ticket"), "error");
     } finally {
       setActionLoading(false);
     }
@@ -307,8 +328,8 @@ export default function TicketDetails() {
       showToast("Ticket rejected.", "error");
       const updatedComments = await fetchTicketComments(ticket.ticket_id);
       setComments(updatedComments);
-    } catch (err: any) {
-      showToast(err.message || "Failed to reject ticket", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to reject ticket"), "error");
     } finally {
       setActionLoading(false);
     }
@@ -336,8 +357,8 @@ export default function TicketDetails() {
       showToast(
         `Ticket reassigned to ${updated.assignee_name || "selected agent"}`,
       );
-    } catch (err: any) {
-      showToast(err.message || "Failed to reassign ticket", "error");
+    } catch (err) {
+      showToast(getErrorMessage(err, "Failed to reassign ticket"), "error");
     } finally {
       setActionLoading(false);
     }
