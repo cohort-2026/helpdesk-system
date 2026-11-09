@@ -5,7 +5,7 @@ import { useDepartments, type Department } from "../../hooks/useDepartments";
 import { useUsers } from "../../context/UsersContext";
 
 interface DepartmentDialogProps {
-  ref?: React.RefObject<HTMLDialogElement | null>;
+  ref: React.RefObject<HTMLDialogElement | null>;
   isOpen?: boolean;
   departmentToEdit?: Department | null;
   onClose?: () => void;
@@ -16,7 +16,6 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
   ref,
   isOpen,
   departmentToEdit,
-  onClose,
   onSuccess,
 }) => {
     const isEditMode = Boolean(departmentToEdit);
@@ -27,7 +26,7 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
   const [nameError, setNameError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const { createDepartment,updateDepartment, actionLoading } = useDepartments();
+  const { createDepartment,updateDepartment } = useDepartments();
     const { users, fetchUsers, loading: usersLoading } = useUsers();
 
 
@@ -133,6 +132,7 @@ export const DepartmentDialog: React.FC<DepartmentDialogProps> = ({
       }, 700);
     } catch (err: any) {
       const msg = err.message || (isEditMode ? "Failed to update department" : "Failed to create department");
+      console.log("error submitting:", errorMessage)
       setErrorMessage(msg);
     }
   };
