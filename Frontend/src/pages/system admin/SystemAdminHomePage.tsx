@@ -21,7 +21,7 @@ const SystemAdminHomePage = () => {
       current: location.pathname === "/system-admin/departments",
       icon: LuBuilding,
     },
-    { name: "Reports", href: "/system-admin/reports", current: location.pathname === "/system-admin/reports", icon: HiOutlineDocumentReport },
+    // { name: "Reports", href: "/system-admin/reports", current: location.pathname === "/system-admin/reports", icon: HiOutlineDocumentReport },
   ];
 
   return (

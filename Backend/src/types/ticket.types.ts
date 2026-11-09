@@ -39,7 +39,9 @@ export interface TicketComment {
   ticket_id: number;
   author_id: string;
   body: string;
+  is_internal: boolean;
   created_at: Date;
+  updated_at?: Date;
   author_name?: string;
   author_email?: string;
   author_role?: string;
@@ -56,9 +58,22 @@ export interface TicketInternalNote {
   author_role?: string;
 }
 
+export interface TicketFeedback {
+  feedback_id: number;
+  ticket_id: number;
+  user_id: string;
+  rating: number;
+  comment?: string | null;
+  created_at: Date;
+  updated_at?: Date;
+  user_name?: string;
+  user_email?: string;
+}
+
 export interface TicketDetail extends Ticket {
   comments?: TicketComment[];
   internal_notes?: TicketInternalNote[];
+  feedback?: TicketFeedback | null;
 }
 
 export interface CreateTicketDto {

@@ -33,12 +33,12 @@ const DepartmentLeadHomePage = () => {
       current: location.pathname === "/department-lead/team",
       icon: AiOutlineTeam,
     },
-    {
-      name: "Reports",
-      href: "/department-lead/reports",
-      current: location.pathname === "/department-lead/reports",
-      icon: HiOutlineDocumentReport,
-    },
+    // {
+    //   name: "Reports",
+    //   href: "/department-lead/reports",
+    //   current: location.pathname === "/department-lead/reports",
+    //   icon: HiOutlineDocumentReport,
+    // },
   ];
 
   return (

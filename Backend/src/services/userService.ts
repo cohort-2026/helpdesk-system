@@ -7,6 +7,11 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
   return rows[0] || null;
 };
 
+export const findById = async (userId: string): Promise<User | null> => {
+  const { rows } = await query("SELECT * FROM users WHERE user_id = $1", [userId]);
+  return rows[0] || null;
+};
+
 export const createUser = async (userData: CreateUserDto): Promise<User> => {
   const { user_id, name, surname, email, password, role = 'Employee', active = true, department_id = null } = userData;
   const hashedPassword = password ? await bcrypt.hash(password, 10) : '';
