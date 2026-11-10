@@ -293,8 +293,9 @@ export const getTicketById = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  const idParam = req.params.id;
-  if (!/^\d+$/.test(idParam)) {
+  const rawId = req.params.id;
+  const idParam = Array.isArray(rawId) ? rawId[0] : rawId;
+  if (!idParam || !/^\d+$/.test(idParam)) {
     return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
   }
 
@@ -587,6 +588,313 @@ export const assignTicket = async (req: Request, res: Response) => {
       message: result.message,
       ticket: result.ticket
     });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// POST /api/tickets/:ticket_id/comments
+export const addComment = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.ticket_id || req.params.id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+  const { body, comment, is_internal, internal_note } = req.body;
+  const commentText = body !== undefined ? body : comment;
+
+  if (!commentText || typeof commentText !== "string" || commentText.trim().length === 0) {
+    return res.status(400).json({ message: "Comment body is required and cannot be empty." });
+  }
+
+  const flagInternal = Boolean(is_internal ?? internal_note ?? false);
+
+  try {
+    const result = await ticketService.addComment(ticketId, user, commentText, flagInternal);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message,
+      comment: result.comment
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// GET /api/tickets/:ticket_id/comments
+export const getComments = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.ticket_id || req.params.id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+
+  try {
+    const result = await ticketService.getTicketComments(ticketId, user);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      comments: result.comments
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// PATCH /api/comments/:id
+export const editComment = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const commentIdParam = req.params.id || req.params.comment_id;
+  if (!commentIdParam || !/^\d+$/.test(String(commentIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid comment ID. Must be an integer." });
+  }
+
+  const commentId = Number(String(commentIdParam).trim());
+  const { body, comment } = req.body;
+  const commentText = body !== undefined ? body : comment;
+
+  if (!commentText || typeof commentText !== "string" || commentText.trim().length === 0) {
+    return res.status(400).json({ message: "Comment body is required and cannot be empty." });
+  }
+
+  try {
+    const result = await ticketService.updateComment(commentId, user, commentText);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message,
+      comment: result.comment
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// DELETE /api/comments/:id
+export const deleteComment = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const commentIdParam = req.params.id || req.params.comment_id;
+  if (!commentIdParam || !/^\d+$/.test(String(commentIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid comment ID. Must be an integer." });
+  }
+
+  const commentId = Number(String(commentIdParam).trim());
+
+  try {
+    const result = await ticketService.deleteComment(commentId, user);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// POST /api/tickets/:ticket_id/feedback
+export const submitFeedback = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.ticket_id || req.params.id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+  const { rating, comment, feedback } = req.body;
+
+  if (rating === undefined || rating === null) {
+    return res.status(400).json({ message: "Rating is required." });
+  }
+
+  const ratingNum = Number(rating);
+  if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+    return res.status(400).json({ message: "Rating must be an integer between 1 and 5." });
+  }
+
+  const feedbackComment = comment !== undefined ? comment : feedback;
+
+  try {
+    const result = await ticketService.submitTicketFeedback(ticketId, user, ratingNum, feedbackComment);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message,
+      feedback: result.feedback
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// GET /api/tickets/:ticket_id/feedback
+export const getFeedback = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.ticket_id || req.params.id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+
+  try {
+    const result = await ticketService.getTicketFeedback(ticketId);
+    return res.status(result.statusCode).json({
+      feedback: result.feedback
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// PATCH /api/tickets/:id/status
+export const updateStatus = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.id || req.params.ticket_id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ message: "Status is required." });
+  }
+
+  const normalized = normalizeStatus(String(status));
+  if (!normalized) {
+    return res.status(400).json({
+      message: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}.`
+    });
+  }
+
+  try {
+    const result = await ticketService.updateTicketStatus(ticketId, normalized, user);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message,
+      ticket: result.ticket
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// PATCH /api/tickets/:id/approve
+export const approveTicket = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.id || req.params.ticket_id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+  const { note } = req.body;
+
+  try {
+    const result = await ticketService.approveTicket(ticketId, user, note);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message,
+      ticket: result.ticket
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// PATCH /api/tickets/:id/reject
+export const rejectTicket = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const ticketIdParam = req.params.id || req.params.ticket_id;
+  if (!ticketIdParam || !/^\d+$/.test(String(ticketIdParam).trim())) {
+    return res.status(400).json({ message: "Invalid ticket ID. Must be an integer." });
+  }
+
+  const ticketId = Number(String(ticketIdParam).trim());
+  const { reason } = req.body;
+
+  try {
+    const result = await ticketService.rejectTicket(ticketId, user, reason);
+    if (!result.success) {
+      return res.status(result.statusCode).json({ message: result.message });
+    }
+    return res.status(result.statusCode).json({
+      message: result.message,
+      ticket: result.ticket
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+// GET /api/tickets/agents
+export const getAgents = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  const deptParam = req.query.department_id as string;
+  let deptId: number | null = null;
+  if (deptParam && /^\d+$/.test(deptParam.trim())) {
+    deptId = Number(deptParam.trim());
+  }
+
+  try {
+    const agents = await ticketService.getAvailableAgents(deptId);
+    return res.status(200).json({ agents });
   } catch (error) {
     return handleError(res, error);
   }

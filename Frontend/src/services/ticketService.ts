@@ -6,9 +6,12 @@ import type {
   PaginatedTicketsResponse,
   TicketApiResponse,
   TicketApiError,
+  TicketComment,
+  TicketFeedback,
+  AgentUser,
 } from "../types/ticket.types";
 
-const API = "http://localhost:5000/api";
+const API = `${import.meta.env.VITE_API_URL}/api`;
 
 const api = axios.create({
   baseURL: API,
@@ -127,6 +130,174 @@ export const assignTicket = async (
       enrichedError.statusCode = status;
       throw enrichedError;
     }
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Fetch all comments for a ticket.
+ * GET /api/tickets/:ticket_id/comments
+ */
+export const fetchTicketComments = async (ticketId: number): Promise<TicketComment[]> => {
+  try {
+    const response = await api.get<{ comments: TicketComment[] }>(`/tickets/${ticketId}/comments`);
+    return response.data.comments || [];
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Add a comment or internal note to a ticket.
+ * POST /api/tickets/:ticket_id/comments
+ */
+export const addTicketComment = async (
+  ticketId: number,
+  body: string,
+  isInternal: boolean = false
+): Promise<TicketComment> => {
+  try {
+    const response = await api.post<{ message: string; comment: TicketComment }>(
+      `/tickets/${ticketId}/comments`,
+      { body, is_internal: isInternal }
+    );
+    return response.data.comment;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Edit a specific comment.
+ * PATCH /api/comments/:id
+ */
+export const updateComment = async (
+  commentId: number,
+  body: string
+): Promise<TicketComment> => {
+  try {
+    const response = await api.patch<{ message: string; comment: TicketComment }>(
+      `/comments/${commentId}`,
+      { body }
+    );
+    return response.data.comment;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Delete a specific comment.
+ * DELETE /api/comments/:id
+ */
+export const deleteComment = async (commentId: number): Promise<void> => {
+  try {
+    await api.delete(`/comments/${commentId}`);
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Submit resolution rating and feedback for a resolved ticket.
+ * POST /api/tickets/:ticket_id/feedback
+ */
+export const submitTicketFeedback = async (
+  ticketId: number,
+  rating: number,
+  comment?: string
+): Promise<TicketFeedback> => {
+  try {
+    const response = await api.post<{ message: string; feedback: TicketFeedback }>(
+      `/tickets/${ticketId}/feedback`,
+      { rating, comment }
+    );
+    return response.data.feedback;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Fetch resolution feedback for a ticket.
+ * GET /api/tickets/:ticket_id/feedback
+ */
+export const fetchTicketFeedback = async (ticketId: number): Promise<TicketFeedback | null> => {
+  try {
+    const response = await api.get<{ feedback: TicketFeedback | null }>(`/tickets/${ticketId}/feedback`);
+    return response.data.feedback;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Update ticket status.
+ * PATCH /api/tickets/:id/status
+ */
+export const updateTicketStatus = async (
+  ticketId: number,
+  status: string
+): Promise<Ticket> => {
+  try {
+    const response = await api.patch<{ message: string; ticket: Ticket }>(
+      `/tickets/${ticketId}/status`,
+      { status }
+    );
+    return response.data.ticket;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Approve a ticket pending approval (Lead/Admin).
+ * PATCH /api/tickets/:id/approve
+ */
+export const approveTicket = async (
+  ticketId: number,
+  note?: string
+): Promise<Ticket> => {
+  try {
+    const response = await api.patch<{ message: string; ticket: Ticket }>(
+      `/tickets/${ticketId}/approve`,
+      { note }
+    );
+    return response.data.ticket;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Reject a ticket pending approval (Lead/Admin).
+ * PATCH /api/tickets/:id/reject
+ */
+export const rejectTicket = async (
+  ticketId: number,
+  reason?: string
+): Promise<Ticket> => {
+  try {
+    const response = await api.patch<{ message: string; ticket: Ticket }>(
+      `/tickets/${ticketId}/reject`,
+      { reason }
+    );
+    return response.data.ticket;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
+ * Fetch available agents for ticket assignment/reassignment.
+ * GET /api/tickets/agents
+ */
+export const fetchAgents = async (departmentId?: number): Promise<AgentUser[]> => {
+  try {
+    const params = departmentId ? { department_id: departmentId } : {};
+    const response = await api.get<{ agents: AgentUser[] }>("/tickets/agents", { params });
+    return response.data.agents || [];
+  } catch (error) {
     throw new Error(extractErrorMessage(error));
   }
 };
