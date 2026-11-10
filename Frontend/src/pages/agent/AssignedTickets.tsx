@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useTickets } from "../../hooks/useTickets";
 import { useToast } from "../../components/ui/Toast";
 import type { Ticket } from "../../types/ticket.types";
@@ -12,7 +13,7 @@ const AssignedTickets = () => {
   const { toastElement, showToast } = useToast();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-
+  const navigate = useNavigate();
   const userId = user?.id || user?.user_id || "";
 
   const { tickets, loading, error } = useTickets({
@@ -28,7 +29,7 @@ const AssignedTickets = () => {
     (t) =>
       t.ticket_status !== "Resolved" &&
       t.ticket_status !== "Closed" &&
-      t.ticket_status !== "Cancelled"
+      t.ticket_status !== "Cancelled",
   );
 
   const priorityOrder: Record<string, number> = {
@@ -43,7 +44,9 @@ const AssignedTickets = () => {
       return (
         `HD-${ticket.ticket_id}`.toLowerCase().includes(search.toLowerCase()) ||
         ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-        (ticket.requester_name || "").toLowerCase().includes(search.toLowerCase())
+        (ticket.requester_name || "")
+          .toLowerCase()
+          .includes(search.toLowerCase())
       );
     })
     .sort((a, b) => {
@@ -85,9 +88,7 @@ const AssignedTickets = () => {
 
       {/* Page Heading */}
       <div>
-        <h1 className="text-2xl font-bold text-body-text">
-          Assigned Tickets
-        </h1>
+        <h1 className="text-2xl font-bold text-body-text">Assigned Tickets</h1>
         <p className="mt-1 text-sm text-gray-500">
           View and manage tickets assigned to you.
         </p>
@@ -117,10 +118,7 @@ const AssignedTickets = () => {
       </div>
 
       {/* Loading State */}
-      {loading && (
-            <Loader/>
-
-      )}
+      {loading && <Loader />}
 
       {/* Assigned Ticket Cards */}
       {!loading && (
@@ -129,6 +127,13 @@ const AssignedTickets = () => {
             filteredTickets.map((ticket: Ticket) => (
               <div
                 key={ticket.ticket_id}
+                onClick={() => navigate(`/tickets/${ticket.ticket_id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter")
+                    navigate(`/tickets/${ticket.ticket_id}`);
+                }}
                 className="flex flex-col gap-3 rounded-md border border-gray-300 bg-white p-4 transition hover:border-[#6A89A7] hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 {/* Ticket Information */}
@@ -146,7 +151,8 @@ const AssignedTickets = () => {
                   </p>
 
                   <p className="text-xs text-gray-500">
-                    Last updated: {formatDate(ticket.updated_at || ticket.created_at)}
+                    Last updated:{" "}
+                    {formatDate(ticket.updated_at || ticket.created_at)}
                   </p>
                 </div>
 
@@ -157,8 +163,8 @@ const AssignedTickets = () => {
                       ticket.ticket_priority === "High"
                         ? "bg-red-50 text-red-600"
                         : ticket.ticket_priority === "Medium"
-                        ? "bg-yellow-50 text-yellow-700"
-                        : "bg-green-50 text-green-700"
+                          ? "bg-yellow-50 text-yellow-700"
+                          : "bg-green-50 text-green-700"
                     }`}
                   >
                     {ticket.ticket_priority}
@@ -169,8 +175,8 @@ const AssignedTickets = () => {
                       ticket.ticket_status === "In progress"
                         ? "bg-blue-50 text-[#6A89A7]"
                         : ticket.ticket_status === "Pending approval"
-                        ? "bg-yellow-50 text-yellow-700"
-                        : "bg-gray-100 text-gray-700"
+                          ? "bg-yellow-50 text-yellow-700"
+                          : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {ticket.ticket_status}
@@ -196,7 +202,8 @@ const AssignedTickets = () => {
       {/* Ticket Count */}
       {!loading && activeTickets.length > 0 && (
         <p className="text-xs text-gray-500">
-          Showing {filteredTickets.length} of {activeTickets.length} assigned tickets
+          Showing {filteredTickets.length} of {activeTickets.length} assigned
+          tickets
         </p>
       )}
     </div>
