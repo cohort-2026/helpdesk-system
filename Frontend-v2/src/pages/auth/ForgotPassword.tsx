@@ -8,19 +8,7 @@ import { Label } from "#components/ui/label";
 import { Link } from "react-router";
 import axios from "axios";
 import { Alert, AlertDescription } from "#components/ui/alert";
-
-function Brand() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex size-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
-        <Inbox className="size-4" />
-      </div>
-      <div className="leading-tight">
-        <p className="text-xs font-semibold text-slate-900">Helpdesk</p>
-      </div>
-    </div>
-  );
-}
+import Brand from "#components/Brand";
 
 function BackToSignIn() {
   return (
