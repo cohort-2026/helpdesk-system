@@ -25,7 +25,7 @@ const Departments = () => {
   const [deletingDepartment, setDeletingDepartment] = useState<Department | null>(null);
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [statusFilter] = useState<"all" | "active" | "inactive">("all");
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });

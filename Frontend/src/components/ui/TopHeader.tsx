@@ -1,6 +1,4 @@
-import React from 'react'
-import { IoChevronDownOutline, IoNotificationsOutline, IoSearch, IoMenuOutline } from 'react-icons/io5'
-import { Input } from './Input'
+import { IoChevronDownOutline, IoMenuOutline } from 'react-icons/io5'
 import { useState } from 'react'
 import ProfileDropDown from './ProfileDropDown'
 import { useAuth } from '../../context/AuthContext'

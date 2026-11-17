@@ -18,7 +18,6 @@ interface DepartmentTableProps {
 const DepartmentTable: React.FC<DepartmentTableProps> = ({
   departments = [],
   loading = false,
-  isRefetching = false,
   onEdit,
   onDelete,
   actionLoading = false,

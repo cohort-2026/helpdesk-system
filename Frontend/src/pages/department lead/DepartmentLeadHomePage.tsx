@@ -3,7 +3,6 @@ import { IoHomeOutline } from "react-icons/io5";
 import { HiOutlineQueueList } from "react-icons/hi2";
 import { MdOutlineApproval } from "react-icons/md";
 import { AiOutlineTeam } from "react-icons/ai";
-import { HiOutlineDocumentReport } from "react-icons/hi";
 import { Outlet, useLocation } from "react-router-dom";
 import LogoArea from "../../components/ui/LogoArea";
 import SideBar from "../../components/ui/SideBar";
