@@ -1,14 +1,16 @@
-import './App.css'
+import "./App.css";
+import { AuthProvider } from "./context/AuthContext";
+import { UsersProvider } from "./context/UsersContext";
+import AppRouter from "./routes/AppRouter";
 
 function App() {
-
   return (
-    <>
-   <h1 className="text-3xl font-bold underline">
-    Hello world!
-  </h1>
-    </>
-  )
+    <AuthProvider>
+      <UsersProvider>
+        <AppRouter />
+      </UsersProvider>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
