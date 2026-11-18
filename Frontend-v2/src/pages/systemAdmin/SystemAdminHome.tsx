@@ -1,7 +1,16 @@
-import DepartmentsCard from '#components/DepartmentsOverviewCard';
-import StatCard from '#components/StatCard';
-import { BarChart3, Building2, Clock, House, Tag, Timer, Users } from 'lucide-react';
-import Sidebar from '#components/Sidebar';
+import DepartmentsCard from "#components/DepartmentsOverviewCard";
+import StatCard from "#components/StatCard";
+import {
+  BarChart3,
+  Building2,
+  Clock,
+  House,
+  Tag,
+  Timer,
+  Users,
+} from "lucide-react";
+import Sidebar from "#components/Sidebar";
+import UsersOverviewCard from "#components/UsersOverviewCard";
 
 const navItems = [
   { label: "Overview", icon: House, active: true },
@@ -26,7 +35,7 @@ const stats = [
 ];
 
 const SystemAdminHome = () => {
- return (
+  return (
     <div className="flex min-h-screen bg-white">
       <Sidebar navItems={navItems} />
 
@@ -50,12 +59,13 @@ const SystemAdminHome = () => {
           <section className="grid gap-4 lg:grid-cols-2">
             <DepartmentsCard />
             <div className="space-y-4">
+                <UsersOverviewCard />
             </div>
           </section>
         </div>
       </main>
     </div>
   );
-}
+};
 
-export default SystemAdminHome
+export default SystemAdminHome;

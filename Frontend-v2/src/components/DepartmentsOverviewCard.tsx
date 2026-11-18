@@ -93,9 +93,7 @@ function DepartmentsCard() {
             ))}
           </TableBody>
         </Table>
-        <p className="border-t px-4 py-3 text-[10px] text-slate-500">
-          Counts only. System Admins don't read ticket contents.
-        </p>
+      
       </CardContent>
     </Card>
   );
