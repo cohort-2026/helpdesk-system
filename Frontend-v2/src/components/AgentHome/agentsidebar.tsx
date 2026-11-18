@@ -5,6 +5,7 @@
 import { Bell, Home, Inbox, Search } from "lucide-react"
 import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Input } from "../ui/input"
+import { Link } from "react-router"
 
 const NAV_ITEMS = [{ title: "Home", href: "/agent", icon: Home }]
 
@@ -12,7 +13,7 @@ export function AgentSidebar({ activePath = "/agent" }: { activePath?: string })
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r bg-slate-50 md:flex">
       {/* Logo + bell */}
-      
+
 <div className="flex items-center gap-2.5 px-4 pt-4">
   <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
     <Inbox className="size-4" />
@@ -40,9 +41,9 @@ export function AgentSidebar({ activePath = "/agent" }: { activePath?: string })
         {NAV_ITEMS.map((item) => {
           const active = activePath === item.href
           return (
-            <a
+            <Link
               key={item.title}
-              href={item.href}
+              to={item.href}
               className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs ${
                 active
                   ? "border bg-white font-medium text-slate-900"
@@ -51,7 +52,7 @@ export function AgentSidebar({ activePath = "/agent" }: { activePath?: string })
             >
               <item.icon className="size-3.5" />
               {item.title}
-            </a>
+            </Link>
           )
         })}
       </nav>

@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, Link} from "react-router"
 import { Zap } from "lucide-react"
 import { Button } from "#components/ui/button"
 import { Card, CardContent } from "#components/ui/card"
@@ -135,9 +135,9 @@ export default function AgentHome() {
             <Card className="gap-0 self-start rounded-lg py-0 shadow-none">
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <h2 className="text-xs font-semibold">My tickets, due soonest</h2>
-                <a href="/agent/open" className="text-[11px] font-medium text-indigo-600 hover:underline">
+                <Link to="/agent/open" className="text-[11px] font-medium text-indigo-600 hover:underline">
                   Open inbox →
-                </a>
+                </Link>
               </div>
               <CardContent className="p-0">
                 <Table>
