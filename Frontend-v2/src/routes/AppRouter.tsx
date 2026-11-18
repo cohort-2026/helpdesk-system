@@ -10,6 +10,7 @@ import SignIn from "../pages/auth/SignIn";
 import ResetPassword from "../pages/auth/RestPassword";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import MyOpen from "../pages/agent/MyOpen";
+import Unassigned from "../pages/agent/Unassigned"
 
 
 const AppRouter = () => {
@@ -37,6 +38,7 @@ const AppRouter = () => {
           <Route path="/agent">
           <Route path="/agent" element={<AgentHome />} />
           <Route path="/agent/open" element={<MyOpen />} />
+          <Route path="ticket-queue" element={<Unassigned />} />
             <Route index element={<AgentHome />}  />
             <Route path="ticket-queue" />
             <Route path="assigned-tickets" />
