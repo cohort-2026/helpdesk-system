@@ -9,7 +9,7 @@ import PlatformAdminHome from "../pages/platform/PlatformAdminHome";
 import SignIn from "../pages/auth/SignIn";
 import ResetPassword from "../pages/auth/RestPassword";
 import ForgotPassword from "../pages/auth/ForgotPassword";
-
+import MyOpen from "../pages/agent/MyOpen";
 
 
 const AppRouter = () => {
@@ -34,7 +34,9 @@ const AppRouter = () => {
 
         {/* Protected Agent Routes */}
         <Route element={<ProtectedRoute allowedRoles={["Agent"]} />}>
-          <Route path="/agent" element={<AgentHome />}>
+          <Route path="/agent">
+          <Route path="/agent" element={<AgentHome />} />
+          <Route path="/agent/open" element={<MyOpen />} />
             <Route index element={<AgentHome />}  />
             <Route path="ticket-queue" />
             <Route path="assigned-tickets" />

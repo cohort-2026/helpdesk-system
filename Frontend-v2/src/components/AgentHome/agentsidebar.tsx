@@ -1,31 +1,32 @@
-// The left-hand menu. It is made by hand with simple Tailwind classes,
-// so you do not need to install the shadcn "sidebar" component.
-// Only "Home" for now. To add more links later, add more lines to NAV_ITEMS.
-
-import { Bell, Home, Inbox, Search } from "lucide-react"
-import { Avatar, AvatarFallback } from "../ui/avatar"
-import { Input } from "../ui/input"
+import { Bell, Home, Inbox, Search, User } from "lucide-react"
 import { Link } from "react-router"
+import { Avatar, AvatarFallback } from "#components/ui/avatar"
+import { Input } from "#components/ui/input"
 
-const NAV_ITEMS = [{ title: "Home", href: "/agent", icon: Home }]
+// Each line here is one link in the menu.
+// "count" is the small number on the right (fake for now).
+const NAV_ITEMS = [
+  { title: "Home", href: "/agent", icon: Home },
+  { title: "My open", href: "/agent/open", icon: Inbox, count: 5 },
+  { title: "Unassigned", href: "/agent/ticket-queue", icon: User, count: 12 },
+]
 
 export function AgentSidebar({ activePath = "/agent" }: { activePath?: string }) {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r bg-slate-50 md:flex">
       {/* Logo + bell */}
-
-<div className="flex items-center gap-2.5 px-4 pt-4">
-  <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-    <Inbox className="size-4" />
-  </div>
-  <div className="flex-1 leading-tight">
-    <p className="text-xs font-semibold text-slate-900">Helpdesk</p>
-  </div>
-  <span className="relative">
-    <Bell className="size-4 text-slate-500" />
-    <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-red-500" />
-  </span>
-</div>
+      <div className="flex items-center gap-2.5 px-4 pt-4">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+          <Inbox className="size-4" />
+        </div>
+        <div className="flex-1 leading-tight">
+          <p className="text-xs font-semibold text-slate-900">Helpdesk</p>
+        </div>
+        <span className="relative">
+          <Bell className="size-4 text-slate-500" />
+          <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-red-500" />
+        </span>
+      </div>
 
       {/* Search box */}
       <div className="relative px-3 pt-3">
@@ -37,7 +38,7 @@ export function AgentSidebar({ activePath = "/agent" }: { activePath?: string })
       </div>
 
       {/* Links */}
-      <nav className="flex-1 px-3 pt-3">
+      <nav className="flex flex-1 flex-col gap-0.5 px-3 pt-3">
         {NAV_ITEMS.map((item) => {
           const active = activePath === item.href
           return (
@@ -51,7 +52,16 @@ export function AgentSidebar({ activePath = "/agent" }: { activePath?: string })
               }`}
             >
               <item.icon className="size-3.5" />
-              {item.title}
+              <span className="flex-1">{item.title}</span>
+              {item.count !== undefined && (
+                <span
+                  className={`text-[11px] ${
+                    active ? "font-semibold text-indigo-600" : "text-slate-400"
+                  }`}
+                >
+                  {item.count}
+                </span>
+              )}
             </Link>
           )
         })}

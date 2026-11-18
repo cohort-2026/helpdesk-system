@@ -57,7 +57,7 @@ export default function AgentHome() {
   const navigate = useNavigate()
 
   // Open a ticket's page
-  const openTicket = (id: string) => navigate(`/tickets/${id}`)
+  const openTicket = (id: string) => navigate(`/agent/tickets/${id}`)
 
   // Claim a ticket. For now it only logs. Later, call your API here.
   const claimTicket = (id: string) => {
