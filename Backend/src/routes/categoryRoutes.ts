@@ -1,6 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { requireAuth } from "../middleware/authMiddlware";
-import { createCategory } from "../controllers/categoryController";
+import { createCategory,
+    getCategories,
+    getCategory,
+    updateCategory,
+    deleteCategory } from "../controllers/categoryController";
 
 const router = Router();
 
@@ -14,5 +18,10 @@ const adminOrLead = (req: Request, res: Response, next: NextFunction) => {
 
 router.use(requireAuth);
 router.post("/", adminOrLead, createCategory);
+router.get("/", adminOrLead, getCategories);
+router.get("/:id", adminOrLead, getCategory);
+router.put("/:id", adminOrLead, updateCategory);
+router.patch("/:id", adminOrLead, updateCategory);
+router.delete("/:id", adminOrLead, deleteCategory);
 
 export default router;
