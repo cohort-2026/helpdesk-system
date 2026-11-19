@@ -33,7 +33,7 @@ function AppointLeadForm({
   const eligible = users.filter(
     (u) =>
       u.active !== false &&
-      (u.role === "Department Lead" || u.role === "Agent")
+      (u.role === "Department Lead" && u.department_id === department.department_id)
   );
 
   const [query, setQuery] = useState("");

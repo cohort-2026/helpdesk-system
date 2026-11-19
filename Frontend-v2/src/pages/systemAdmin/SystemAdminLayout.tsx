@@ -1,11 +1,15 @@
 import { Outlet } from "react-router";
-import { Building2, House, Users as UsersIcon } from "lucide-react";
+import { BarChart3, Building2, Clock, House, Tag, Timer, Users } from "lucide-react";
 import Sidebar, { type NavItem } from "#components/Sidebar";
 
-export const systemAdminNavItems: NavItem[] = [
+const systemAdminNavItems: NavItem[] = [
   { label: "Overview", icon: House, href: "/system-admin" },
-  { label: "Users", icon: UsersIcon, count: 214, href: "/system-admin/users" },
+  { label: "Users", icon: Users, count: 214, href: "/system-admin/users" },
   { label: "Departments", icon: Building2, count: 5, href: "/system-admin/departments" },
+  { label: "Categories & routing", icon: Tag, href: "/system-admin/categories" },
+  { label: "SLA policies", icon: Timer, href: "/system-admin/sla-policies" },
+  { label: "Business hours", icon: Clock, href: "/system-admin/business-hours" },
+  { label: "Reports", icon: BarChart3, href: "/system-admin/reports" },
 ];
 
 export default function SystemAdminLayout() {

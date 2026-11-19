@@ -18,7 +18,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#components/ui/sheet";
-import { avatarColor, fullName, initialsOf, ROLES, StatusLabel } from "../pages/systemAdmin/Users";
+import {
+  avatarColor,
+  fullName,
+  initialsOf,
+  ROLES,
+  StatusLabel,
+} from "../pages/systemAdmin/Users";
 import { cn } from "#lib/utils";
 import type { User, UserRole } from "#context/UsersContext";
 import type { Department } from "#hooks/useDepartments";
@@ -51,7 +57,9 @@ interface UserSheetProps {
 }
 
 function FieldError({ children }: { children?: React.ReactNode }) {
-  return children ? <p className="text-[11px] text-red-600">{children}</p> : null;
+  return children ? (
+    <p className="text-[11px] text-red-600">{children}</p>
+  ) : null;
 }
 
 export default function UserSheet({
@@ -99,7 +107,9 @@ export default function UserSheet({
     if (!isEdit) {
       if (!form.firstName.trim()) errors.firstName = "First name is required";
       if (!form.surname.trim()) errors.surname = "Surname is required";
-      if (!/^\S+@\S+\.\S+$/.test(form.email)) errors.email = "Enter a valid work email";
+      if (!/^\S+@\S+\.\S+$/.test(form.email))
+        errors.email = "Enter a valid work email";
+    if (!form.role) errors.role = "Role is required";
     }
     return errors;
   };
@@ -127,9 +137,15 @@ export default function UserSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-        <form onSubmit={handleSubmit} noValidate className="flex h-full flex-col">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex h-full flex-col"
+        >
           <SheetHeader className="border-b p-5">
-            <SheetTitle className="text-base">{isEdit ? "Edit user" : "Add user"}</SheetTitle>
+            <SheetTitle className="text-base">
+              {isEdit ? "Edit user" : "Add user"}
+            </SheetTitle>
             <SheetDescription className="text-xs">
               {isEdit
                 ? "Update user role, department, or active status."
@@ -147,13 +163,20 @@ export default function UserSheet({
             {isEdit && user ? (
               <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
                 <Avatar className="size-9">
-                  <AvatarFallback className={cn("text-xs font-semibold text-white", avatarColor(user.user_id))}>
+                  <AvatarFallback
+                    className={cn(
+                      "text-xs font-semibold text-white",
+                      avatarColor(user.user_id),
+                    )}
+                  >
                     {initialsOf(user)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="text-sm font-semibold">{fullName(user)}</p>
-                  <p className="truncate text-[11px] text-slate-500">{user.email}</p>
+                  <p className="truncate text-[11px] text-slate-500">
+                    {user.email}
+                  </p>
                 </div>
                 <StatusLabel active={user.active !== false} />
               </div>
@@ -209,8 +232,15 @@ export default function UserSheet({
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Role</Label>
-              <Select value={form.role} onValueChange={(val) => val && setField("role")(val)} disabled={saving}>
+              <Label className="text-xs">
+                Role<span className="text-red-500">*</span>
+              </Label>
+
+              <Select
+                value={form.role}
+                onValueChange={(val) => val && setField("role")(val)}
+                disabled={saving}
+              >
                 <SelectTrigger className="h-9 w-full text-xs">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -228,7 +258,9 @@ export default function UserSheet({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="department" className="text-xs">Department</Label>
+              <Label htmlFor="department" className="text-xs">
+                Department <span className="text-red-500">*</span>
+              </Label>
               <Select
                 value={form.department_id}
                 onValueChange={(val) => val && setField("department_id")(val)}
@@ -238,28 +270,37 @@ export default function UserSheet({
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="text-xs">None / Unassigned</SelectItem>
+                  <SelectItem value="none" className="text-xs">
+                    None / Unassigned
+                  </SelectItem>
                   {departments.map((d) => (
-                    <SelectItem key={d.department_id} value={String(d.department_id)} className="text-xs">
+                    <SelectItem
+                      key={d.department_id}
+                      value={String(d.department_id)}
+                      className="text-xs"
+                    >
                       {d.department_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-[11px] leading-snug text-slate-500">
-                Assigning a department connects the user with the corresponding ticket queue.
+                Assigning a department connects the user with the corresponding
+                ticket queue.
               </p>
             </div>
 
             {isEdit && (
               <p className="text-[11px] leading-snug text-slate-500">
-                Deactivating blocks user sign-in but retains their ticket assignment history.
+                Deactivating blocks user sign-in but retains their ticket
+                assignment history.
               </p>
             )}
           </div>
 
           <SheetFooter className="flex-row items-center justify-end gap-2 border-t p-4">
-            {isEdit && user &&
+            {isEdit &&
+              user &&
               (user.active === false ? (
                 <Button
                   type="button"

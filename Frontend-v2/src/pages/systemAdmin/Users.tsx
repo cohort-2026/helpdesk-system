@@ -453,7 +453,7 @@ export default function Users() {
                         <StatusLabel active={!inactive} />
                       </TableCell>
                       <TableCell className="px-2 py-2.5">
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger
                             render={
                               <Button
@@ -469,7 +469,7 @@ export default function Users() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               className="text-xs"
-                              onSelect={() => setSheet({ open: true, user: u })}
+                              onClick={() => setSheet({ open: true, user: u })}
                             >
                               Edit user
                             </DropdownMenuItem>

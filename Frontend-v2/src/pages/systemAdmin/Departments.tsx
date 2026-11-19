@@ -312,7 +312,7 @@ export default function Departments() {
                       </TableCell>
 
                       <TableCell className="px-2 py-3">
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger
                             render={
                               <Button
@@ -326,26 +326,24 @@ export default function Departments() {
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="text-xs" onSelect={() => setDialogDept(d)}>
+                            <DropdownMenuItem className="text-xs" onClick={() => setDialogDept(d)}>
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs" onSelect={() => setAppointing(d)}>
-                              <UserRound className="size-3.5 mr-1 text-slate-400" />
+                            <DropdownMenuItem className="text-xs" onClick={() => setAppointing(d)}>
                               Appoint lead
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs" onSelect={() => setManagingMembersDept(d)}>
-                              <Users className="size-3.5 mr-1 text-slate-400" />
+                            <DropdownMenuItem className="text-xs" onClick={() => setManagingMembersDept(d)}>
                               Manage members
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {inactive ? (
-                              <DropdownMenuItem className="text-xs" onSelect={() => handleReactivate(d)}>
+                              <DropdownMenuItem className="text-xs" onClick={() => handleReactivate(d)}>
                                 Reactivate
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
                                 className="text-xs text-red-600 focus:text-red-600"
-                                onSelect={() => setDeactivating(d)}
+                                onClick={() => setDeactivating(d)}
                               >
                                 Deactivate
                               </DropdownMenuItem>

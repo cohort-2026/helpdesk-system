@@ -32,13 +32,6 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
     <aside className="w-56 shrink-0 flex-col border-r bg-slate-50/70 p-3 flex min-h-screen">
       <div className="flex items-center justify-between px-1 py-1">
         <Brand />
-        <button
-          aria-label="Notifications"
-          className="relative rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
-        >
-          <Bell className="size-4" />
-          <span className="absolute right-1 top-1 size-1.5 rounded-full bg-red-500" />
-        </button>
       </div>
 
       <nav className="mt-4 space-y-0.5" aria-label="Sidebar Navigation">
@@ -50,9 +43,9 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
             <>
               <Icon className="size-3.5" />
               <span className="flex-1">{label}</span>
-              {count !== undefined && (
+              {/* {count !== undefined && (
                 <span className="text-[10px] text-slate-400">{count}</span>
-              )}
+              )} */}
             </>
           );
 
