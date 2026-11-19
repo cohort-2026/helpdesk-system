@@ -14,3 +14,17 @@ export const createCategory = async (
   );
   return result.rows[0];
 };
+
+export const getAllCategories = async () => {
+  const result = await pool.query(`SELECT * FROM category`);
+  return result.rows;
+}
+
+export const getCategoryById = async (id: number) => {
+  const result = await pool.query(
+    "SELECT * FROM category WHERE category_id = $1",
+    [id]
+  );
+  return result.rows[0];
+};
+
