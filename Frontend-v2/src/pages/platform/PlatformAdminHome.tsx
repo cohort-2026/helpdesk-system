@@ -1,11 +1,9 @@
-import React from 'react'
-
 const PlatformAdminHome = () => {
   return (
-    <div>
-      <h1>Platform Admin Home</h1>
+    <div className="p-6">
+      <h1 className="text-xl font-bold tracking-tight text-slate-900">Platform Admin Home</h1>
     </div>
-  )
-}
+  );
+};
 
-export default PlatformAdminHome
+export default PlatformAdminHome;

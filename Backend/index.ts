@@ -8,6 +8,7 @@ import userRoutes from "./src/routes/userRoutes";
 import ticketRoutes from "./src/routes/ticketRoutes";
 import departmentRoutes from "./src/routes/departmentRoutes";
 import commentRoutes from "./src/routes/commentRoutes";
+import categoryRoutes from "./src/routes/categoryRoutes";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/categories", categoryRoutes);
 
 const startServer = async () => {
   await testDbConnection();
