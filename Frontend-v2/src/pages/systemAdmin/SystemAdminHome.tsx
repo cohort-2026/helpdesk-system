@@ -1,26 +1,6 @@
 import DepartmentsCard from "#components/DepartmentsOverviewCard";
 import StatCard from "#components/StatCard";
-import {
-  BarChart3,
-  Building2,
-  Clock,
-  House,
-  Tag,
-  Timer,
-  Users,
-} from "lucide-react";
-import Sidebar from "#components/Sidebar";
 import UsersOverviewCard from "#components/UsersOverviewCard";
-
-const navItems = [
-  { label: "Overview", icon: House, active: true },
-  { label: "Users", icon: Users, count: 214 },
-  { label: "Departments", icon: Building2, count: 5 },
-  { label: "Categories & routing", icon: Tag },
-  { label: "SLA policies", icon: Timer },
-  { label: "Business hours", icon: Clock },
-  { label: "Reports", icon: BarChart3 },
-];
 
 const stats = [
   { label: "Active users", value: "208", note: "6 deactivated" },
@@ -36,35 +16,31 @@ const stats = [
 
 const SystemAdminHome = () => {
   return (
-    <div className="flex min-h-screen bg-white">
-      <Sidebar navItems={navItems} />
+    <>
+      <header className="border-b px-6 py-4">
+        <h1 className="text-lg font-semibold tracking-tight text-slate-900">
+          Overview
+        </h1>
+        <p className="mt-0.5 text-xs text-slate-500">
+          organisation, set-up and totals
+        </p>
+      </header>
 
-      <main className="min-w-0 flex-1">
-        <header className="border-b px-6 py-4">
-          <h1 className="text-lg font-semibold tracking-tight text-slate-900">
-            Overview
-          </h1>
-          <p className="mt-0.5 text-xs text-slate-500">
-            organisation, set-up and totals
-          </p>
-        </header>
+      <div className="space-y-4 p-4">
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((s) => (
+            <StatCard key={s.label} {...s} danger={s.danger ?? false} />
+          ))}
+        </section>
 
-        <div className="space-y-4 p-4">
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {stats.map((s) => (
-              <StatCard key={s.label} {...s} danger={s.danger ?? false} />
-            ))}
-          </section>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            <DepartmentsCard />
-            <div className="space-y-4">
-                <UsersOverviewCard />
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
+        <section className="grid gap-4 lg:grid-cols-2">
+          <DepartmentsCard />
+          <div className="space-y-4">
+            <UsersOverviewCard />
+          </div>
+        </section>
+      </div>
+    </>
   );
 };
 
