@@ -8,9 +8,11 @@ import { slaOf, type Ticket } from "./ticket-data"
 export function TicketListPane({
   tickets,
   selectedId,
+  loading = false,
 }: {
   tickets: Ticket[]
   selectedId?: string
+  loading?: boolean
 }) {
   // Resolved tickets leave "My open"
   const open = tickets.filter((t) => t.status !== "Resolved")
@@ -27,7 +29,22 @@ export function TicketListPane({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {open.map((t) => {
+        {loading ? (
+          <div className="space-y-3 p-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-1.5 animate-pulse">
+                <div className="h-2 w-24 rounded bg-slate-200" />
+                <div className="h-2.5 w-full rounded bg-slate-200" />
+                <div className="h-2 w-32 rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+        ) : open.length === 0 ? (
+          <p className="p-6 text-center text-xs text-slate-400">
+            No open tickets assigned to you.
+          </p>
+        ) : (
+          open.map((t) => {
           const sla = slaOf(t)
           const selected = t.id === selectedId
           return (
@@ -59,7 +76,8 @@ export function TicketListPane({
               </div>
             </Link>
           )
-        })}
+        })
+        )}
       </div>
     </section>
   )

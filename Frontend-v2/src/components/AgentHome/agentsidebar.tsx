@@ -2,16 +2,37 @@ import { Bell, Home, Inbox, Search, User } from "lucide-react"
 import { Link } from "react-router"
 import { Avatar, AvatarFallback } from "#components/ui/avatar"
 import { Input } from "#components/ui/input"
+import { useAuth } from "#context/AuthContext"
 
-// Each line here is one link in the menu.
-// "count" is the small number on the right (fake for now).
-const NAV_ITEMS = [
-  { title: "Home", href: "/agent", icon: Home },
-  { title: "My open", href: "/agent/open", icon: Inbox, count: 5 },
-  { title: "Unassigned", href: "/agent/ticket-queue", icon: User, count: 12 },
-]
+interface AgentSidebarProps {
+  activePath?: string
+  /** Live count for "My open" nav item — passed in from AgentHome */
+  myOpenCount?: number
+  /** Live count for "Unassigned" nav item — passed in from AgentHome */
+  unassignedCount?: number
+}
 
-export function AgentSidebar({ activePath = "/agent" }: { activePath?: string }) {
+export function AgentSidebar({
+  activePath = "/agent",
+  myOpenCount,
+  unassignedCount,
+}: AgentSidebarProps) {
+  const { user } = useAuth()
+
+  const fullName  = [user?.name, user?.surname].filter(Boolean).join(" ") || "Agent"
+  const initials  = fullName
+    .split(" ")
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .slice(0, 2)
+    .join("")
+  const role      = user?.role ?? "Agent"
+
+  const NAV_ITEMS = [
+    { title: "Home",        href: "/agent",              icon: Home,  count: undefined },
+    { title: "My open",     href: "/agent/open",          icon: Inbox, count: myOpenCount },
+    { title: "Unassigned",  href: "/agent/ticket-queue",  icon: User,  count: unassignedCount },
+  ]
+
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r bg-slate-50 md:flex">
       {/* Logo + bell */}
@@ -71,12 +92,12 @@ export function AgentSidebar({ activePath = "/agent" }: { activePath?: string })
       <div className="m-3 flex items-center gap-2 border-t pt-3">
         <Avatar className="size-7">
           <AvatarFallback className="bg-indigo-600 text-[10px] text-white">
-            TN
+            {initials}
           </AvatarFallback>
         </Avatar>
-        <div className="leading-tight">
-          <div className="text-xs font-medium">Thabo Nkosi</div>
-          <div className="text-[11px] text-slate-500">Agent · IT Support</div>
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-xs font-medium">{fullName}</div>
+          <div className="text-[11px] text-slate-500">{role}</div>
         </div>
       </div>
     </aside>
