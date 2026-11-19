@@ -48,6 +48,7 @@
   "imports": {
     "#components/*": "./src/components/*.tsx",
     "#lib/*": "./src/lib/*.ts",
-    "#hooks/*": "./src/hooks/*.ts"
+    "#hooks/*": "./src/hooks/*.ts",
+    "#context/*": "./src/context/*.tsx"
   }
 }

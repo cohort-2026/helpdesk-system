@@ -219,7 +219,7 @@ const MEMBER_ROLES = ["Employee", "Agent"];
 
 /* System Admins can manage any department. A Department Lead can only
  manage the department whose lead_id is their own user_id. */
-const canManageDepartment = (user: any, department: any) => {
+export const canManageDepartment = (user: any, department: any) => {
   if (!user) return false;
   if (user.role === "System Admin") return true;
   return (
