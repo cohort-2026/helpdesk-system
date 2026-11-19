@@ -9,9 +9,8 @@ import PlatformAdminHome from "../pages/platform/PlatformAdminHome";
 import SignIn from "../pages/auth/SignIn";
 import ResetPassword from "../pages/auth/RestPassword";
 import ForgotPassword from "../pages/auth/ForgotPassword";
-import MyOpen from "../pages/agent/MyOpen";
 import Unassigned from "../pages/agent/Unassigned"
-
+import TicketInbox from "../pages/ticket-inbox"
 
 const AppRouter = () => {
   return (
@@ -36,14 +35,12 @@ const AppRouter = () => {
         {/* Protected Agent Routes */}
         <Route element={<ProtectedRoute allowedRoles={["Agent"]} />}>
           <Route path="/agent">
-          <Route path="/agent" element={<AgentHome />} />
-          <Route path="/agent/open" element={<MyOpen />} />
+          <Route index element={<AgentHome />} />
+          <Route path="open" element={<TicketInbox />} />
           <Route path="ticket-queue" element={<Unassigned />} />
-            <Route index element={<AgentHome />}  />
-            <Route path="ticket-queue" />
             <Route path="assigned-tickets" />
             <Route path="resolved-tickets"  />
-            <Route path="tickets/:id" />
+            <Route path="tickets/:id" element={<TicketInbox />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
