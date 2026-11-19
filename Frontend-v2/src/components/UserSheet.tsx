@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Input } from "#components/ui/input";
 import { Label } from "#components/ui/label";
 import { Avatar, AvatarFallback } from "#components/ui/avatar";
-import { ToggleGroup, ToggleGroupItem } from "#components/ui/toggle-group";
 import { Button } from "#components/ui/button";
 import {
   Select,
@@ -19,53 +18,110 @@ import {
   SheetHeader,
   SheetTitle,
 } from "#components/ui/sheet";
-import { avatarColor, DEPARTMENTS, fullName, initialsOf, ROLES, StatusLabel } from "../pages/systemAdmin/Users";
+import { avatarColor, fullName, initialsOf, ROLES, StatusLabel } from "../pages/systemAdmin/Users";
 import { cn } from "#lib/utils";
+import type { User, UserRole } from "#context/UsersContext";
+import type { Department } from "#hooks/useDepartments";
 
-const emptyForm = {
+export interface UserFormData {
+  firstName: string;
+  surname: string;
+  email: string;
+  role: string;
+  department_id: string; // "none" or string number
+}
+
+const emptyForm: UserFormData = {
   firstName: "",
   surname: "",
   email: "",
-  role: "employee",
-  department: "",
-  forcePasswordChange: true,
+  role: "Employee",
+  department_id: "none",
 };
 
-function validate(form, isEdit) {
-  const errors = {};
-  if (!isEdit) {
-    if (!form.firstName.trim()) errors.firstName = "Required";
-    if (!form.surname.trim()) errors.surname = "Required";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) errors.email = "Enter a valid work email";
-  }
-  if (!form.department) errors.department = "Choose a department";
-  return errors;
+interface UserSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  user: User | null;
+  departments: Department[];
+  allowedRoles?: UserRole[];
+  onSave: (form: UserFormData, user: User | null) => Promise<void>;
+  onRequestDeactivate: (user: User) => void;
+  onReactivate: (user: User) => Promise<void>;
 }
 
-function FieldError({ children }) {
+function FieldError({ children }: { children?: React.ReactNode }) {
   return children ? <p className="text-[11px] text-red-600">{children}</p> : null;
 }
 
-function UserSheet({ open, onOpenChange, user, onSave, onRequestDeactivate, onReactivate }) {
+export default function UserSheet({
+  open,
+  onOpenChange,
+  user,
+  departments,
+  allowedRoles = ["Department Lead", "Agent", "Employee"],
+  onSave,
+  onRequestDeactivate,
+  onReactivate,
+}: UserSheetProps) {
   const isEdit = Boolean(user);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<UserFormData>(emptyForm);
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Reset whenever the drawer opens or switches user
   useEffect(() => {
     if (!open) return;
     setSubmitted(false);
-    setForm(user ? { ...emptyForm, role: user.role, department: user.department ?? "" } : emptyForm);
-  }, [open, user]);
+    setErrorMsg(null);
+    if (user) {
+      setForm({
+        firstName: user.name || "",
+        surname: user.surname || "",
+        email: user.email || "",
+        role: user.role || "Employee",
+        department_id: user.department_id ? String(user.department_id) : "none",
+      });
+    } else {
+      setForm({
+        ...emptyForm,
+        role: allowedRoles[0] || "Employee",
+      });
+    }
+  }, [open, user, allowedRoles]);
 
-  const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
-  const errors = validate(form, isEdit);
-  const show = (key) => submitted && errors[key];
+  const setField = (key: keyof UserFormData) => (value: string) =>
+    setForm((f) => ({ ...f, [key]: value }));
 
-  const handleSubmit = (e) => {
+  const validate = () => {
+    const errors: Record<string, string> = {};
+    if (!isEdit) {
+      if (!form.firstName.trim()) errors.firstName = "First name is required";
+      if (!form.surname.trim()) errors.surname = "Surname is required";
+      if (!/^\S+@\S+\.\S+$/.test(form.email)) errors.email = "Enter a valid work email";
+    }
+    return errors;
+  };
+
+  const errors = validate();
+  const show = (key: string) => submitted && errors[key];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    if (Object.keys(errors).length === 0) onSave(form, user);
+    if (Object.keys(errors).length > 0) return;
+
+    try {
+      setSaving(true);
+      setErrorMsg(null);
+      await onSave(form, user);
+      onOpenChange(false);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to save user.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -76,16 +132,22 @@ function UserSheet({ open, onOpenChange, user, onSave, onRequestDeactivate, onRe
             <SheetTitle className="text-base">{isEdit ? "Edit user" : "Add user"}</SheetTitle>
             <SheetDescription className="text-xs">
               {isEdit
-                ? "Change their role or department. Name and email can't be edited here."
-                : "They'll get an email with a temporary password."}
+                ? "Update user role, department, or active status."
+                : "Enter user details to send them login instructions and temporary credentials."}
             </SheetDescription>
           </SheetHeader>
 
+          {errorMsg && (
+            <div className="mx-5 mt-4 rounded-md bg-red-50 p-2.5 text-xs text-red-600 border border-red-200">
+              {errorMsg}
+            </div>
+          )}
+
           <div className="flex-1 space-y-4 overflow-y-auto p-5">
-            {isEdit ? (
+            {isEdit && user ? (
               <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
                 <Avatar className="size-9">
-                  <AvatarFallback className={cn("text-xs font-semibold text-white", avatarColor(user.id))}>
+                  <AvatarFallback className={cn("text-xs font-semibold text-white", avatarColor(user.user_id))}>
                     {initialsOf(user)}
                   </AvatarFallback>
                 </Avatar>
@@ -93,44 +155,53 @@ function UserSheet({ open, onOpenChange, user, onSave, onRequestDeactivate, onRe
                   <p className="text-sm font-semibold">{fullName(user)}</p>
                   <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                 </div>
-                <StatusLabel status={user.status} />
+                <StatusLabel active={user.active !== false} />
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="firstName" className="text-xs">First name</Label>
+                    <Label htmlFor="firstName" className="text-xs">
+                      First name <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="firstName"
                       value={form.firstName}
-                      onChange={(e) => set("firstName")(e.target.value)}
+                      onChange={(e) => setField("firstName")(e.target.value)}
                       aria-invalid={!!show("firstName")}
                       className="h-9 text-xs"
+                      disabled={saving}
                     />
                     <FieldError>{show("firstName")}</FieldError>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="surname" className="text-xs">Surname</Label>
+                    <Label htmlFor="surname" className="text-xs">
+                      Surname <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="surname"
                       value={form.surname}
-                      onChange={(e) => set("surname")(e.target.value)}
+                      onChange={(e) => setField("surname")(e.target.value)}
                       aria-invalid={!!show("surname")}
                       className="h-9 text-xs"
+                      disabled={saving}
                     />
                     <FieldError>{show("surname")}</FieldError>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-xs">Work email</Label>
+                  <Label htmlFor="email" className="text-xs">
+                    Work email <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     value={form.email}
-                    onChange={(e) => set("email")(e.target.value)}
+                    onChange={(e) => setField("email")(e.target.value)}
                     aria-invalid={!!show("email")}
                     className="h-9 text-xs"
+                    disabled={saving}
                   />
                   <FieldError>{show("email")}</FieldError>
                 </div>
@@ -139,67 +210,63 @@ function UserSheet({ open, onOpenChange, user, onSave, onRequestDeactivate, onRe
 
             <div className="space-y-1.5">
               <Label className="text-xs">Role</Label>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                value={form.role}
-                onValueChange={(v) => v && set("role")(v)} // keep one always selected
-                className="grid w-full grid-cols-3 gap-2"
-                aria-label="Role"
-              >
-                {Object.entries(ROLES).map(([value, r]) => (
-                  <ToggleGroupItem
-                    key={value}
-                    value={value}
-                    className="h-9 rounded-md text-xs data-[state=on]:border-indigo-600 data-[state=on]:bg-indigo-50 data-[state=on]:font-semibold data-[state=on]:text-indigo-700"
-                  >
-                    {r.segment}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+              <Select value={form.role} onValueChange={(val) => val && setField("role")(val)} disabled={saving}>
+                <SelectTrigger className="h-9 w-full text-xs">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allowedRoles.map((r) => {
+                    const meta = ROLES[r as keyof typeof ROLES] || { label: r };
+                    return (
+                      <SelectItem key={r} value={r} className="text-xs">
+                        {meta.label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="department" className="text-xs">Department</Label>
-              <Select value={form.department} onValueChange={set("department")}>
-                <SelectTrigger
-                  id="department"
-                  aria-invalid={!!show("department")}
-                  className="h-9 w-full text-xs"
-                >
+              <Select
+                value={form.department_id}
+                onValueChange={(val) => val && setField("department_id")(val)}
+                disabled={saving}
+              >
+                <SelectTrigger id="department" className="h-9 w-full text-xs">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DEPARTMENTS.map((d) => (
-                    <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
+                  <SelectItem value="none" className="text-xs">None / Unassigned</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.department_id} value={String(d.department_id)} className="text-xs">
+                      {d.department_name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-[11px] leading-snug text-slate-500">
-                Required for employees, agents and leads. Agents only see this
-                department's tickets.
+                Assigning a department connects the user with the corresponding ticket queue.
               </p>
-              <FieldError>{show("department")}</FieldError>
             </div>
-
-        
 
             {isEdit && (
               <p className="text-[11px] leading-snug text-slate-500">
-                Users can't be deleted. Deactivating blocks sign-in but keeps
-                their tickets and history, and you can reactivate them any time.
+                Deactivating blocks user sign-in but retains their ticket assignment history.
               </p>
             )}
           </div>
 
           <SheetFooter className="flex-row items-center justify-end gap-2 border-t p-4">
-            {isEdit &&
-              (user.status === "deactivated" ? (
+            {isEdit && user &&
+              (user.active === false ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   className="mr-auto text-xs"
+                  disabled={saving}
                   onClick={() => onReactivate(user)}
                 >
                   Reactivate
@@ -210,16 +277,29 @@ function UserSheet({ open, onOpenChange, user, onSave, onRequestDeactivate, onRe
                   variant="outline"
                   size="sm"
                   className="mr-auto border-red-200 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+                  disabled={saving}
                   onClick={() => onRequestDeactivate(user)}
                 >
                   Deactivate
                 </Button>
               ))}
-            <Button type="button" variant="outline" size="sm" className="text-xs" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700">
-              {isEdit ? "Save changes" : "Add user"}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={saving}
+              className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
+            >
+              {saving ? "Saving..." : isEdit ? "Save changes" : "Add user"}
             </Button>
           </SheetFooter>
         </form>
@@ -227,5 +307,3 @@ function UserSheet({ open, onOpenChange, user, onSave, onRequestDeactivate, onRe
     </Sheet>
   );
 }
-
-export default UserSheet;

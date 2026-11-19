@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Avatar, AvatarFallback } from "#components/ui/avatar";
 import { Badge } from "#components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "#components/ui/card";
@@ -10,52 +11,42 @@ import {
   TableRow,
 } from "#components/ui/table";
 import { cn } from "#lib/utils";
-import Count from "#components/Count";
-
-const users = [
-  {
-    name: "Thandi Mthembu",
-    initials: "TM",
-    department: "IT Support",
-    role: "Lead",
-  },
-  {
-    name: "Nomvula Sithole",
-    initials: "NS",
-    department: "Human Resources",
-    role: "Agent",
-  },
-  {
-    name: "Lerato Soke",
-    initials: "Ls",
-    department: "Human Resources",
-    role: "Employee",
-  },
-  {
-    name: "Bongani Mabaso",
-    initials: "BM",
-    department: "Finance",
-    role: "Employee",
-  },
-  {
-    name: "Yolanda Ndlovu",
-    initials: "YN",
-    department: "IT Support",
-    role: "Agent",
-  },
-];
+import { useUsers } from "#context/UsersContext";
+import { useDepartments } from "#hooks/useDepartments";
+import { avatarColor } from "../pages/systemAdmin/Users";
 
 function UsersCard() {
+  const { users, loading: usersLoading } = useUsers();
+  const { departments, loading: deptLoading } = useDepartments();
+
+  const deptMap = useMemo(() => {
+    const map = new Map<string, string>();
+    departments.forEach((d) => {
+      map.set(String(d.department_id), d.department_name);
+    });
+    return map;
+  }, [departments]);
+
+  // Show latest 5 or 6 users
+  const recentUsers = useMemo(() => {
+    return users.slice(0, 6);
+  }, [users]);
+
+  const loading = usersLoading || deptLoading;
+
   return (
     <Card className="gap-0 overflow-hidden rounded-xl py-0 shadow-none">
-      <CardHeader className="border-b px-4 py-3">
+      <CardHeader className="border-b px-4 py-3 flex flex-row items-center justify-between">
         <CardTitle className="text-xs font-semibold">Users</CardTitle>
+        <span className="text-[11px] text-slate-500 font-normal">
+          {users.length} total
+        </span>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              {["Name", "Initials", "Role", "Department"].map((h) => (
+              {["Name", "Role", "Department", "Status"].map((h) => (
                 <TableHead
                   key={h}
                   className="h-8 px-4 text-[10px] font-medium text-slate-500"
@@ -66,33 +57,70 @@ function UsersCard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.name}>
-                <TableCell className="px-4 py-3 text-xs font-semibold">
-                  {user.name}
-                </TableCell>
-                <TableCell className="px-4 py-3">
-                  <Avatar className="size-5">
-                    <AvatarFallback
-                      className={cn("text-[8px] font-semibold text-white bg-indigo-800")}
-                    >
-                      {user.initials}
-                    </AvatarFallback>
-                  </Avatar>{" "}
-                </TableCell>
-                <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className="border-amber-300 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700"
-                    >
-                        {user.role}
-                    </Badge>
-                </TableCell>
-              <TableCell className="px-4 py-3 text-xs font-semibold">
-                  {user.department}
+            {loading && users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-16 text-center text-xs text-slate-400">
+                  Loading users...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : recentUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-16 text-center text-xs text-slate-400">
+                  No users found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              recentUsers.map((user) => {
+                const initials = `${user.name?.[0] || ""}${user.surname?.[0] || ""}`.toUpperCase() || "U";
+                const deptName = user.department_id
+                  ? deptMap.get(String(user.department_id)) || `Dept #${user.department_id}`
+                  : "Unassigned";
+
+                return (
+                  <TableRow key={user.user_id}>
+                    <TableCell className="px-4 py-2.5 text-xs font-semibold">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="size-5">
+                          <AvatarFallback
+                            className={cn(
+                              "text-[8px] font-semibold text-white",
+                              avatarColor(user.user_id)
+                            )}
+                          >
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{user.name} {user.surname}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5">
+                      <Badge
+                        variant="outline"
+                        className="border-slate-200 bg-slate-50 px-1.5 text-[10px] font-medium text-slate-700"
+                      >
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 text-xs text-slate-600">
+                      {deptName}
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "px-1.5 py-0 text-[10px] font-medium",
+                          user.active === false
+                            ? "border-slate-200 bg-slate-100 text-slate-500"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        )}
+                      >
+                        {user.active === false ? "Inactive" : "Active"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </CardContent>
