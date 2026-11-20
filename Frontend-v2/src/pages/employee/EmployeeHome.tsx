@@ -1,12 +1,13 @@
-import EmployeeHeader from '#components/EmployeeHeader'
+import EmployeeHeader from '#components/EmployeeHeader';
+import { Outlet } from 'react-router';
 
 
 const EmployeeHome = () => {
   return (
     <div>
-        <EmployeeHeader/>
+      <EmployeeHeader />
+      <Outlet />
     </div>
-  )
-}
-
-export default EmployeeHome
+  );
+};
+export default EmployeeHome;
