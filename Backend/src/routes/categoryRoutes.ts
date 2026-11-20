@@ -18,7 +18,7 @@ const adminOrLead = (req: Request, res: Response, next: NextFunction) => {
 
 router.use(requireAuth);
 router.post("/", adminOrLead, createCategory);
-router.get("/", adminOrLead, getCategories);
+router.get("/", getCategories);
 router.get("/:id", adminOrLead, getCategory);
 router.put("/:id", adminOrLead, updateCategory);
 router.patch("/:id", adminOrLead, updateCategory);

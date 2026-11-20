@@ -8,11 +8,17 @@ import { firstName, type Status, type Ticket, type TimelineItem } from "./ticket
 export function TicketConversationPane({
   ticket,
   timeline,
+  commentsLoading = false,
+  agentName,
+  agentInitials,
   onSetStatus,
   onSend,
 }: {
   ticket: Ticket
   timeline: TimelineItem[]
+  commentsLoading?: boolean
+  agentName: string
+  agentInitials: string
   onSetStatus: (status: Status) => void
   onSend: (text: string, internal: boolean, setWaiting: boolean) => void
 }) {
@@ -82,7 +88,23 @@ export function TicketConversationPane({
 
       {/* ---------- Messages ---------- */}
       <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-        {timeline.map((item) =>
+        {commentsLoading ? (
+          <div className="space-y-3 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-lg border bg-white p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="size-5 rounded-full bg-slate-200" />
+                  <div className="h-2.5 w-24 rounded bg-slate-200" />
+                </div>
+                <div className="h-2 w-full rounded bg-slate-200" />
+                <div className="h-2 w-3/4 rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+        ) : timeline.length === 0 ? (
+          <p className="text-center text-xs text-slate-400 mt-8">No messages yet.</p>
+        ) : (
+          timeline.map((item) =>
           item.kind === "event" ? (
             // Grey line for things that happened (status changes, etc.)
             <div key={item.id} className="flex items-center gap-2 px-1 text-[11px] text-slate-500">
@@ -122,7 +144,7 @@ export function TicketConversationPane({
               )}
             </div>
           )
-        )}
+        ))}
         <div ref={bottomRef} />
       </div>
 

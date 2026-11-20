@@ -23,6 +23,8 @@ import ResetPassword from "../pages/auth/RestPassword";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import Unassigned from "../pages/agent/Unassigned"
 import TicketInbox from "../pages/ticket-inbox"
+import SubmitRequest from "@/pages/employee/submit-request/SubmitRequest";
+import MyRequests from "@/pages/employee/my-requests/MyRequests";
 
 const AppRouter = () => {
   return (
@@ -36,10 +38,10 @@ const AppRouter = () => {
         {/* Protected Employee Routes */}
         <Route element={<ProtectedRoute allowedRoles={["Employee"]} />}>
           <Route path="/employee" element={<EmployeeHome />}>
-            <Route index element={<EmployeeHome />} />
-            <Route path="my-requests" />
+            <Route index element={<MyRequests />} />
+            <Route path="my-requests" element={<MyRequests />} />
             <Route path="tickets/:id" />
-            <Route path="submit-request"/>
+            <Route path="submit-request" element={<SubmitRequest />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
