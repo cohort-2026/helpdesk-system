@@ -147,11 +147,11 @@ export const getCategories = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Department not found." });
     }
 
-    if (!canManageDepartment(req.user, department)) {
-      return res
-        .status(403)
-        .json({ message: "You can only view categories for a department you lead." });
-    }
+    // if (!canManageDepartment(req.user, department)) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "You can only view categories for a department you lead." });
+    // }
 
     const categories = await categoryService.getCategoriesByDepartment(departmentId, status);
     return res.status(200).json({ categories });

@@ -2,14 +2,24 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "../../../components/ui/button";
 
+declare global {
+  interface ImportMetaEnv {
+    readonly VITE_API_URL: string;
+  }
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
 // From PDF p.14 - S5 Guided requests
 // Category comes from backend ONLY: GET /api/categories
 // Admin creates it. Employee never creates it. No constant here.
 type Category = {
   id: string;
-  name: string;
+  category_name: string;
   icon: string;
-  department: string;
+  categorydepartment_id: string;
   // server derives these - browser can't override (PDF p.14)
   defaultPriority?: string;
   needsApproval?: boolean;
@@ -27,31 +37,35 @@ export default function SubmitRequest() {
   const [createdRef, setCreatedRef] = useState("");
 
   // Employee READS categories. Does not create them.
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/categories", {
-      headers: { Authorization: `Bearer ${token}` },
+useEffect(() => {
+  fetch(`${import.meta.env.VITE_API_URL}/api/categories?department_id=1`, { credentials: "include" })
+    .then((r) => {
+      if (!r.ok) throw new Error(`Request failed: ${r.status}`);
+      return r.json();
     })
-      .then((r) => r.json())
-      .then((data) => setCategories(data))
-      .catch(() => setCategories([]))
-      .finally(() => setLoading(false));
-  }, []);
+    .then((data) => {
+      // handle both bare arrays and { data: [...] } / { categories: [...] } wrappers
+      const list = Array.isArray(data) ? data : data.categories ?? data.data;
+      setCategories(Array.isArray(list) ? list : []);
+      console.log("Fetched categories:", list);
+    })
+    .catch((err) => {
+      console.error("Failed to load categories:", err);
+      setCategories([]);
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   const filtered = categories.filter((c) =>
-    (c.name + c.department).toLowerCase().includes(search.toLowerCase()),
+    (c.category_name + c.categorydepartment_id).toLowerCase().includes(search.toLowerCase()),
   );
 
   async function handleSubmit() {
     if (!selected) return;
     // PDF p.14: POST /api/tickets - server returns HD-xxxx + first reply time
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/tickets", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/create`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: "include",
       body: JSON.stringify({
         categoryId: selected.id,
         title,
@@ -135,10 +149,10 @@ export default function SubmitRequest() {
                   }`}
                 >
                   <p className="font-medium">
-                    {c.icon} {c.name}
+                    {c.icon} {c.category_name}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {c.department}
+                    {c.categorydepartment_id}
                   </p>
                 </button>
               ))}
@@ -160,7 +174,7 @@ export default function SubmitRequest() {
       {step === 2 && (
         <>
           <div className="rounded-lg border bg-indigo-50 border-indigo-200 p-3 text-sm">
-            Selected: <span className="font-medium">{selected?.name}</span>
+            Selected: <span className="font-medium">{selected?.category_name}</span>
             <button
               onClick={() => setStep(1)}
               className="ml-2 underline text-indigo-700"
