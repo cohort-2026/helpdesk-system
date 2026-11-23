@@ -133,27 +133,21 @@ export const createCategory = async (req: Request, res: Response) => {
 };
 
 export const getCategories = async (req: Request, res: Response) => {
-  const errors = validateCategoryQuery(req.query);
-  if (errors.length > 0) {
-    return res.status(400).json({ message: "Validation failed", errors });
-  }
+  // const errors = validateCategoryQuery(req.query);
+  // if (errors.length > 0) {
+  //   return res.status(400).json({ message: "Validation failed", errors });
+  // }
 
-  const departmentId = Number(req.query.department_id);
   const status = (req.query.status as string) || null;
 
   try {
-    const department = await departmentService.getDepartmentById(departmentId);
-    if (!department) {
-      return res.status(404).json({ message: "Department not found." });
-    }
-
-    // if (!canManageDepartment(req.user, department)) {
+    // if (!canViewAllCategories(req.user)) {
     //   return res
     //     .status(403)
-    //     .json({ message: "You can only view categories for a department you lead." });
+    //     .json({ message: "You don't have permission to view all categories." });
     // }
 
-    const categories = await categoryService.getCategoriesByDepartment(departmentId, status);
+    const categories = await categoryService.getAllCategories(status);
     return res.status(200).json({ categories });
   } catch (error) {
     console.error("Category error:", error);

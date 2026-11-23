@@ -1,5 +1,11 @@
 import { pool } from "../config/database";
 
+const CATEGORY_WITH_DEPARTMENT = `
+  SELECT c.*, d.department_name
+  FROM category c
+  LEFT JOIN department d ON d.department_id = c.category_department_id
+`;
+
 export const createCategory = async (
   departmentId: number,
   name: string,
@@ -20,18 +26,29 @@ export const getCategoriesByDepartment = async (
   status: string | null
 ) => {
   const result = await pool.query(
-    `SELECT * FROM category
-     WHERE category_department_id = $1
-       AND ($2::text IS NULL OR status = $2)
-     ORDER BY category_name`,
+    `${CATEGORY_WITH_DEPARTMENT}
+     WHERE c.category_department_id = $1
+       AND ($2::text IS NULL OR c.status = $2)
+     ORDER BY c.category_name`,
     [departmentId, status]
+  );
+  return result.rows;
+};
+
+export const getAllCategories = async (status: string | null) => {
+  const result = await pool.query(
+    `${CATEGORY_WITH_DEPARTMENT}
+     WHERE ($1::text IS NULL OR c.status = $1)
+     ORDER BY c.category_name`,
+    [status]
   );
   return result.rows;
 };
 
 export const getCategoryById = async (id: number) => {
   const result = await pool.query(
-    "SELECT * FROM category WHERE category_id = $1",
+    `${CATEGORY_WITH_DEPARTMENT}
+     WHERE c.category_id = $1`,
     [id]
   );
   return result.rows[0];

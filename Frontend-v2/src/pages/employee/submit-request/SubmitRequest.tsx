@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "../../../components/ui/button";
+import { useTickets } from "#hooks/useTickets";
 
 declare global {
   interface ImportMetaEnv {
@@ -16,15 +17,20 @@ declare global {
 // Category comes from backend ONLY: GET /api/categories
 // Admin creates it. Employee never creates it. No constant here.
 type Category = {
-  id: string;
+  category_id: number;
+  category_department_id: number;
   category_name: string;
-  icon: string;
-  categorydepartment_id: string;
-  // server derives these - browser can't override (PDF p.14)
-  defaultPriority?: string;
-  needsApproval?: boolean;
+  description?: string;
+  status: string;
+  // not in your current response, see the note below
+  department_name?: string;
 };
 
+type DepartmentGroup = {
+  id: number;
+  name: string;
+  categories: Category[];
+};
 export default function SubmitRequest() {
   const [step, setStep] = useState(1);
   const [search, setSearch] = useState("");
@@ -35,51 +41,78 @@ export default function SubmitRequest() {
   const [details, setDetails] = useState("");
   const [impact, setImpact] = useState("");
   const [createdRef, setCreatedRef] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const { createTicket } = useTickets({ autoFetch: false });
 
   // Employee READS categories. Does not create them.
-useEffect(() => {
-  fetch(`${import.meta.env.VITE_API_URL}/api/categories?department_id=1`, { credentials: "include" })
-    .then((r) => {
-      if (!r.ok) throw new Error(`Request failed: ${r.status}`);
-      return r.json();
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/categories?status=active`, {
+      credentials: "include",
     })
-    .then((data) => {
-      // handle both bare arrays and { data: [...] } / { categories: [...] } wrappers
-      const list = Array.isArray(data) ? data : data.categories ?? data.data;
-      setCategories(Array.isArray(list) ? list : []);
-      console.log("Fetched categories:", list);
-    })
-    .catch((err) => {
-      console.error("Failed to load categories:", err);
-      setCategories([]);
-    })
-    .finally(() => setLoading(false));
-}, []);
+      .then((r) => {
+        if (!r.ok) throw new Error(`Request failed: ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        // handle bare arrays and { categories } / { category } / { data } wrappers
+        const raw = Array.isArray(data)
+          ? data
+          : (data.categories ?? data.category ?? data.data);
+        setCategories(Array.isArray(raw) ? raw : raw ? [raw] : []);
+      })
+      .catch((err) => {
+        console.error("Failed to load categories:", err);
+        setCategories([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  const filtered = categories.filter((c) =>
-    (c.category_name + c.categorydepartment_id).toLowerCase().includes(search.toLowerCase()),
-  );
+  const grouped = useMemo<DepartmentGroup[]>(() => {
+    const q = search.toLowerCase();
+    const map = new Map<number, DepartmentGroup>();
+
+    for (const c of categories) {
+      const deptName =
+        c.department_name ?? `Department ${c.category_department_id}`;
+
+      const haystack =
+        `${c.category_name} ${c.description ?? ""} ${deptName}`.toLowerCase();
+      if (!haystack.includes(q)) continue;
+
+      if (!map.has(c.category_department_id)) {
+        map.set(c.category_department_id, {
+          id: c.category_department_id,
+          name: deptName,
+          categories: [],
+        });
+      }
+      map.get(c.category_department_id)!.categories.push(c);
+    }
+
+    return [...map.values()].sort((a, b) => a.id - b.id);
+  }, [categories, search]);
 
   async function handleSubmit() {
     if (!selected) return;
-    // PDF p.14: POST /api/tickets - server returns HD-xxxx + first reply time
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/create`, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({
-        categoryId: selected.id,
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const ticket = await createTicket({
+        department_id: selected.category_department_id,
+        category_id: selected.category_id,
         title,
         description: details,
-        impact,
-      }),
-    });
-    if (!res.ok) {
-      alert("Failed to submit request. Please try again." + res.status);
-      return;
+      });
+      setCreatedRef(`HD-${ticket.ticket_id}`);
+      setStep(3);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Failed to submit request."
+      );
+    } finally {
+      setSubmitting(false);
     }
-    const data = await res.json();
-    setCreatedRef(data.reference || data.ticketNumber || "");
-    setStep(3);
   }
 
   // STEP 3 - Confirmation - PDF: "get a reference number"
@@ -136,25 +169,40 @@ useEffect(() => {
             </div>
           )}
 
-          {!loading && filtered.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {filtered.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelected(c)}
-                  className={`text-left rounded-lg border p-4 hover:border-indigo-500 ${
-                    selected?.id === c.id
-                      ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600"
-                      : "bg-white"
-                  }`}
-                >
-                  <p className="font-medium">
-                    {c.icon} {c.category_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {c.categorydepartment_id}
-                  </p>
-                </button>
+          {!loading && categories.length > 0 && grouped.length === 0 && (
+            <p className="text-muted-foreground">
+              No categories match your search.
+            </p>
+          )}
+
+          {!loading && grouped.length > 0 && (
+            <div className="space-y-6">
+              {grouped.map((dept) => (
+                <section key={dept.id} className="space-y-3">
+                  <h2 className="text-lg font-semibold border-b pb-1">
+                    {dept.name}
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {dept.categories.map((c) => (
+                      <button
+                        key={c.category_id}
+                        onClick={() => setSelected(c)}
+                        className={`text-left rounded-lg border p-4 hover:border-indigo-500 ${
+                          selected?.category_id === c.category_id
+                            ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600"
+                            : "bg-white"
+                        }`}
+                      >
+                        <p className="font-medium">{c.category_name}</p>
+                        {c.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {c.description}
+                          </p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           )}
@@ -174,7 +222,8 @@ useEffect(() => {
       {step === 2 && (
         <>
           <div className="rounded-lg border bg-indigo-50 border-indigo-200 p-3 text-sm">
-            Selected: <span className="font-medium">{selected?.category_name}</span>
+            Selected:{" "}
+            <span className="font-medium">{selected?.category_name}</span>
             <button
               onClick={() => setStep(1)}
               className="ml-2 underline text-indigo-700"
@@ -183,6 +232,11 @@ useEffect(() => {
             </button>
           </div>
           <div className="space-y-4">
+            {submitError && (
+              <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {submitError}
+              </p>
+            )}
             <div>
               <label className="text-sm font-medium">Title *</label>
               <input
@@ -223,11 +277,11 @@ useEffect(() => {
               ← Back
             </Button>
             <Button
-              disabled={!title.trim() || !details.trim() || !impact}
+              disabled={!title.trim() || !details.trim() || !impact || submitting}
               onClick={handleSubmit}
               className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
             >
-              Submit request
+              {submitting ? "Submitting..." : "Submit request"}
             </Button>
           </div>
         </>

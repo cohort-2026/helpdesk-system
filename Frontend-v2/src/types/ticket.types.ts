@@ -90,7 +90,7 @@ export interface TicketFilters {
   status?: string;
   priority?: string;
   department_id?: number;
-  creator_id?: string;
+  requester_id?: string;
   assignee_id?: string;
   search?: string;
   page?: number;
