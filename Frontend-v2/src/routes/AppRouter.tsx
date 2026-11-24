@@ -25,6 +25,7 @@ import Unassigned from "../pages/agent/Unassigned"
 import TicketInbox from "../pages/ticket-inbox"
 import SubmitRequest from "@/pages/employee/submit-request/SubmitRequest";
 import MyRequests from "@/pages/employee/my-requests/MyRequests";
+import Categories from "@/pages/systemAdmin/Categories";
 
 const AppRouter = () => {
   return (
@@ -78,6 +79,7 @@ const AppRouter = () => {
             <Route index element={<SystemAdminHome />} />
             <Route path="users" element={<Users/>} />
             <Route path="departments" element={<Departments />} />
+            <Route path="categories" element={<Categories />} />
             <Route path="reports" element={<SystemAdminReports />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
