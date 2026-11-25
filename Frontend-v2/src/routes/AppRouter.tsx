@@ -21,17 +21,18 @@ import TicketDetails from "../pages/tickets/TicketDetails";
 import SignIn from "../pages/auth/SignIn";
 import ResetPassword from "../pages/auth/RestPassword";
 import ForgotPassword from "../pages/auth/ForgotPassword";
-import Unassigned from "../pages/agent/Unassigned"
-import TicketInbox from "../pages/ticket-inbox"
+import Unassigned from "../pages/agent/Unassigned";
+import TicketInbox from "../pages/ticket-inbox";
 import SubmitRequest from "@/pages/employee/submit-request/SubmitRequest";
 import MyRequests from "@/pages/employee/my-requests/MyRequests";
+import EmployeeTicketDetail from "@/pages/employee/EmployeeTicketDetail";
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<SignIn/>} />
+        <Route path="/" element={<SignIn />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -40,7 +41,7 @@ const AppRouter = () => {
           <Route path="/employee" element={<EmployeeHome />}>
             <Route index element={<MyRequests />} />
             <Route path="my-requests" element={<MyRequests />} />
-            <Route path="tickets/:id" />
+            <Route path="tickets/:id" element={<EmployeeTicketDetail />} />
             <Route path="submit-request" element={<SubmitRequest />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
@@ -49,11 +50,11 @@ const AppRouter = () => {
         {/* Protected Agent Routes */}
         <Route element={<ProtectedRoute allowedRoles={["Agent"]} />}>
           <Route path="/agent">
-          <Route index element={<AgentHome />} />
-          <Route path="open" element={<TicketInbox />} />
-          <Route path="ticket-queue" element={<Unassigned />} />
+            <Route index element={<AgentHome />} />
+            <Route path="open" element={<TicketInbox />} />
+            <Route path="ticket-queue" element={<Unassigned />} />
             <Route path="assigned-tickets" />
-            <Route path="resolved-tickets"  />
+            <Route path="resolved-tickets" />
             <Route path="tickets/:id" element={<TicketInbox />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
@@ -76,7 +77,7 @@ const AppRouter = () => {
         <Route element={<ProtectedRoute allowedRoles={["System Admin"]} />}>
           <Route path="/system-admin" element={<SystemAdminLayout />}>
             <Route index element={<SystemAdminHome />} />
-            <Route path="users" element={<Users/>} />
+            <Route path="users" element={<Users />} />
             <Route path="departments" element={<Departments />} />
             <Route path="reports" element={<SystemAdminReports />} />
             <Route path="profile" element={<UserProfile />} />
