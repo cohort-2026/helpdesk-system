@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { useAuth } from "#context/AuthContext";
 import { useTickets } from "#hooks/useTickets";
 import { Button } from "../../../components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
