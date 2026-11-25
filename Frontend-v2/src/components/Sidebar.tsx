@@ -1,8 +1,8 @@
 import Brand from "./Brand";
-import { Bell, FileText } from "lucide-react";
+import { FileText, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "#components/ui/avatar";
 import { cn } from "#lib/utils";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
 export type NavItem = {
@@ -20,7 +20,8 @@ type SidebarProps = {
 
 function Sidebar({ navItems, userRole }: SidebarProps) {
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const currentRole = userRole || user?.role || "User";
   const displayName = user?.name ? `${user.name} ${user.surname ?? ""}`.trim() : "Ruan Steyn";
@@ -35,7 +36,7 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
       </div>
 
       <nav className="mt-4 space-y-0.5" aria-label="Sidebar Navigation">
-        {navItems.map(({ label, icon: Icon, active, count, href }) => {
+        {navItems.map(({ label, icon: Icon, active, href }) => {
           const isItemActive =
             active ?? (href ? location.pathname === href : false);
 
@@ -97,6 +98,16 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
           <p className="text-[10px] text-slate-500">{currentRole}</p>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          void logout().then(() => navigate("/", { replace: true }));
+        }}
+        className="mt-2 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
+      >
+        <LogOut className="size-3.5" />
+        Sign out
+      </button>
     </aside>
   );
 }

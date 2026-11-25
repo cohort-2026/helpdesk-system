@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Inbox} from "lucide-react";
+import { Inbox, LogOut} from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "#lib/utils";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "#context/AuthContext";
 
 const navItems = [
   { label: "My requests", href: "/employee/my-requests" },
@@ -12,6 +13,10 @@ const navItems = [
 
 export default function EmployeeHeader ({ initials = "LM" }){
   const [active, setActive] = useState("My requests");
+    const { logout } = useAuth();
+      const navigate = useNavigate();
+
+  
 
   return (
     <header className="border-b bg-white">
@@ -54,6 +59,16 @@ export default function EmployeeHeader ({ initials = "LM" }){
               {initials}
             </AvatarFallback>
           </Avatar>
+               <button
+        type="button"
+        onClick={() => {
+          void logout().then(() => navigate("/", { replace: true }));
+        }}
+        className="mt-2 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
+      >
+        <LogOut className="size-3.5" />
+        Sign out
+      </button>
         </div>
       </div>
     </header>
