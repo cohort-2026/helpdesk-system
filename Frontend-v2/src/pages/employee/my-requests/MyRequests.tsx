@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { useAuth } from "#context/AuthContext";
 import { useTickets } from "#hooks/useTickets";
 import { Button } from "../../../components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
@@ -26,20 +25,19 @@ export default function MyRequests() {
   const [tab, setTab] = useState("Active");
   // const { user, loading: authLoading } = useAuth();
   // const userId = user?.id || user?.user_id;
-  const {
-    tickets,
-    loading,
-    error,
-    refetch,
-  } = useTickets({
+  const { tickets, loading, error, refetch } = useTickets({
     filters: { limit: 100 },
     autoFetch: true,
   });
 
   const countFor = (label: string) => {
-    if (label === "Active") return tickets.filter((ticket) => isActive(ticket.ticket_status)).length;
-    if (label === "Waiting on you") return tickets.filter((ticket) => isWaiting(ticket.ticket_status)).length;
-    return tickets.filter((ticket) => ticket.ticket_status.toLowerCase() === label.toLowerCase()).length;
+    if (label === "Active")
+      return tickets.filter((ticket) => isActive(ticket.ticket_status)).length;
+    if (label === "Waiting on you")
+      return tickets.filter((ticket) => isWaiting(ticket.ticket_status)).length;
+    return tickets.filter(
+      (ticket) => ticket.ticket_status.toLowerCase() === label.toLowerCase(),
+    ).length;
   };
 
   const filtered = tickets.filter((ticket) => {
@@ -47,7 +45,9 @@ export default function MyRequests() {
     if (tab === "Waiting on you") return isWaiting(ticket.ticket_status);
     return ticket.ticket_status.toLowerCase() === tab.toLowerCase();
   });
-  const waitingTicket = tickets.find((ticket) => isWaiting(ticket.ticket_status));
+  const waitingTicket = tickets.find((ticket) =>
+    isWaiting(ticket.ticket_status),
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -77,7 +77,9 @@ export default function MyRequests() {
             <span className="text-muted-foreground">{waitingTicket.title}</span>
           </p>
           <Button asChild variant="outline" className="bg-white">
-            <Link to={`/employee/tickets/${waitingTicket.ticket_id}`}>Reply</Link>
+            <Link to={`/employee/tickets/${waitingTicket.ticket_id}`}>
+              Reply
+            </Link>
           </Button>
         </div>
       )}
@@ -98,21 +100,32 @@ export default function MyRequests() {
       {loading ? (
         <div className="space-y-2" aria-label="Loading requests">
           {[1, 2, 3].map((item) => (
-            <div key={item} className="h-16 animate-pulse rounded-lg border bg-muted/40" />
+            <div
+              key={item}
+              className="h-16 animate-pulse rounded-lg border bg-muted/40"
+            />
           ))}
         </div>
       ) : error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-          <p className="font-medium text-red-800">Couldn’t load your requests</p>
+          <p className="font-medium text-red-800">
+            Couldn’t load your requests
+          </p>
           <p className="mt-1 text-sm text-red-700">{error}</p>
-          <Button variant="outline" className="mt-4 bg-white" onClick={() => refetch()}>
+          <Button
+            variant="outline"
+            className="mt-4 bg-white"
+            onClick={() => refetch()}
+          >
             Try again
           </Button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-lg border p-10 text-center">
           <p className="font-medium">
-            {tickets.length === 0 ? "No requests yet" : `No ${tab.toLowerCase()} requests`}
+            {tickets.length === 0
+              ? "No requests yet"
+              : `No ${tab.toLowerCase()} requests`}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {tickets.length === 0
@@ -124,7 +137,9 @@ export default function MyRequests() {
               asChild
               className="mt-4 bg-indigo-600 text-white hover:bg-indigo-700"
             >
-              <Link to="/employee/submit-request">Create your first request</Link>
+              <Link to="/employee/submit-request">
+                Create your first request
+              </Link>
             </Button>
           )}
         </div>
@@ -141,7 +156,9 @@ export default function MyRequests() {
                   HD-{ticket.ticket_id} · {ticket.title}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {ticket.category_name ?? ticket.request_type_name ?? "Uncategorized"}
+                  {ticket.category_name ??
+                    ticket.request_type_name ??
+                    "Uncategorized"}
                 </p>
               </div>
               <span className="w-32 shrink-0 rounded-full border px-2 py-1 text-center text-xs capitalize">
