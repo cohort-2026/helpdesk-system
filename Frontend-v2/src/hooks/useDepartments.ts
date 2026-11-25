@@ -38,9 +38,11 @@ export interface UpdateDepartmentPayload {
 interface UseDepartmentsOptions {
   autoPolling?: boolean;
   pollInterval?: number;
+  limit?: number;
 }
 
-export const useDepartments = (_options: UseDepartmentsOptions = {}) => {
+export const useDepartments = (options: UseDepartmentsOptions = {}) => {
+  const { limit = 10 } = options;
   // const { autoPolling = true, pollInterval = 10000 } = options;
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,7 +62,10 @@ export const useDepartments = (_options: UseDepartmentsOptions = {}) => {
       }
       setError(null);
 
-      const res = await axios.get(`${API}/departments`, { withCredentials: true });
+      const res = await axios.get(`${API}/departments`, {
+        params: { limit },
+        withCredentials: true,
+      });
       const fetchedDepartments: Department[] = res.data?.departments || res.data || [];
       setDepartments(fetchedDepartments);
       initialFetchDone.current = true;
@@ -77,7 +82,7 @@ export const useDepartments = (_options: UseDepartmentsOptions = {}) => {
       setLoading(false);
       setIsRefetching(false);
     }
-  }, []);
+  }, [limit]);
 
   const createDepartment = async (data: DepartmentPayload | string) => {
     setActionLoading(true);
