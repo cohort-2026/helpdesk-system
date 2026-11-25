@@ -209,14 +209,14 @@ export default function AgentHome() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white text-slate-900">
+    <div className="flex h-screen overflow-hidden bg-white text-slate-900">
       <AgentSidebar
         activePath="/agent"
         myOpenCount={activeMyTickets.length}
         unassignedCount={unassigned.length}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* ---------- Top bar ---------- */}
         <header className="flex items-center gap-2 border-b-2 px-6 py-4">
           <div className="flex-1">
@@ -232,7 +232,7 @@ export default function AgentHome() {
           </kbd>
         </header>
 
-        <main className="flex flex-col gap-4 p-6">
+        <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6">
           {/* ---------- KPI boxes ---------- */}
           <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {kpiBoxes.map((box) => {

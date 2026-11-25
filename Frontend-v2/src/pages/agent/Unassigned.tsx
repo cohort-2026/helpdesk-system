@@ -225,13 +225,13 @@ export default function Unassigned() {
   const status: Status = loading ? "loading" : error ? "error" : "ready"
 
   return (
-    <div className="flex min-h-screen bg-white text-slate-900">
+    <div className="flex h-screen overflow-hidden bg-white text-slate-900">
       <AgentSidebar
         activePath="/agent/ticket-queue"
         unassignedCount={unassigned.length}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* ---------- Top bar ---------- */}
         <header className="flex items-center gap-2 border-b px-6 py-4">
           <div className="flex-1">
@@ -279,7 +279,7 @@ export default function Unassigned() {
           </div>
         </div>
 
-        <main className="flex flex-col gap-3 p-6">
+        <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-6">
           {/* ---------- Table / Loading / Empty / Error ---------- */}
           <Card className="gap-0 overflow-hidden rounded-lg py-0 shadow-none">
             {status === "loading" && (

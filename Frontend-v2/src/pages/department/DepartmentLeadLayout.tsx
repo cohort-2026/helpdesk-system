@@ -12,9 +12,9 @@ export const departmentLeadNavItems: NavItem[] = [
 
 export default function DepartmentLeadLayout() {
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex h-screen overflow-hidden bg-white">
       <Sidebar navItems={departmentLeadNavItems} userRole="Department Lead" />
-      <main className="min-w-0 flex-1">
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
     </div>

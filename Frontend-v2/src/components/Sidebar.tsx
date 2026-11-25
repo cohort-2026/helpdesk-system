@@ -30,12 +30,12 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
     : "RS";
 
   return (
-    <aside className="w-56 shrink-0 flex-col border-r bg-slate-50/70 p-3 flex min-h-screen">
+    <aside className="flex h-screen min-h-0 w-56 shrink-0 flex-col overflow-hidden border-r bg-slate-50/70 p-3">
       <div className="flex items-center justify-between px-1 py-1">
         <Brand />
       </div>
 
-      <nav className="mt-4 space-y-0.5" aria-label="Sidebar Navigation">
+      <nav className="mt-4 min-h-0 flex-1 space-y-0.5 overflow-hidden" aria-label="Sidebar Navigation">
         {navItems.map(({ label, icon: Icon, active, href }) => {
           const isItemActive =
             active ?? (href ? location.pathname === href : false);
@@ -75,17 +75,6 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
           );
         })}
       </nav>
-
-      <p className="mt-5 px-2.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-        Stretch
-      </p>
-      <a
-        href="#"
-        className="mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
-      >
-        <FileText className="size-3.5" />
-        Audit log
-      </a>
 
       <div className="mt-auto flex items-center gap-2.5 border-t px-1 pt-3">
         <Avatar className="size-7">
