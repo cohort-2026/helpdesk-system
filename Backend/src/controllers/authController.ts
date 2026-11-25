@@ -6,11 +6,20 @@ import { sendPasswordResetEmail } from "../utils/mailer";
 import crypto from "crypto";
 
 const COOKIE_NAME = "session";
+const SESSION_TTL_SECONDS = 60 * 60;
+const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
-    maxAge: 1000 * 60 * 60, 
+    maxAge: SESSION_TTL_MS,
+    path: "/",
+};
+const CLEAR_COOKIE_OPTIONS = {
+    httpOnly: COOKIE_OPTIONS.httpOnly,
+    secure: COOKIE_OPTIONS.secure,
+    sameSite: COOKIE_OPTIONS.sameSite,
+    path: COOKIE_OPTIONS.path,
 };
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
@@ -65,11 +74,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
             return invalidCredentials()
         }
-        const token = jwt.sign({id: user.user_id, email: user.email, role: user.role}, process.env.JWT_SECRET || "secret", {expiresIn: "1h"})
+        const token = jwt.sign({id: user.user_id, email: user.email, role: user.role}, process.env.JWT_SECRET || "secret", {expiresIn: SESSION_TTL_SECONDS})
         res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
 
         const { password: _, ...userWithoutPassword } = user;
-        res.status(200).json({ user: userWithoutPassword})
+        res.status(200).json({
+            user: userWithoutPassword,
+            expiresAt: Date.now() + SESSION_TTL_MS,
+        })
     } 
     catch (error) {
 
@@ -79,7 +91,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
     export const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
+        res.clearCookie(COOKIE_NAME, CLEAR_COOKIE_OPTIONS);
         res.status(200).json({message: "Logged out successfully"})
     } catch (error) {
         next(error)
@@ -93,14 +105,17 @@ export const me = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { id: string; email: string; role: string };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as { id: string; email: string; role: string; exp?: number };
+        if (typeof decoded.exp !== "number") {
+            return res.status(401).json({message: "Not authenticated"})
+        }
         const user = await userServices.findUserByEmail(decoded.email);
 
         if(!user) {
             return res.status(401).json({message: "Not authenticated"})
         }
         const { password: _, ...userWithoutPassword } = user;
-        res.status(200).json({user: userWithoutPassword})
+        res.status(200).json({user: userWithoutPassword, expiresAt: decoded.exp * 1000})
     } catch (error) {
         return res.status(401).json({message: "Not authenticated"})
     }

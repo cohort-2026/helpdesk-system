@@ -108,7 +108,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       let response;
       try {
-        response = await axios.get(API_BASE_URL, { withCredentials: true });
+        response = await axios.get(`${API_BASE_URL}/getUser`, { withCredentials: true });
       } catch (err: any) {
         if (err.response?.status === 404) {
           response = await axios.get(`${API_BASE_URL}/getUser`, { withCredentials: true });

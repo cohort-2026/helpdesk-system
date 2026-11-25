@@ -1,8 +1,8 @@
 import Brand from "./Brand";
-import { Bell, FileText } from "lucide-react";
+import { FileText, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "#components/ui/avatar";
 import { cn } from "#lib/utils";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
 export type NavItem = {
@@ -20,7 +20,8 @@ type SidebarProps = {
 
 function Sidebar({ navItems, userRole }: SidebarProps) {
   const location = useLocation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const currentRole = userRole || user?.role || "User";
   const displayName = user?.name ? `${user.name} ${user.surname ?? ""}`.trim() : "Ruan Steyn";
@@ -29,13 +30,13 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
     : "RS";
 
   return (
-    <aside className="w-56 shrink-0 flex-col border-r bg-slate-50/70 p-3 flex min-h-screen">
+    <aside className="flex h-screen min-h-0 w-56 shrink-0 flex-col overflow-hidden border-r bg-slate-50/70 p-3">
       <div className="flex items-center justify-between px-1 py-1">
         <Brand />
       </div>
 
-      <nav className="mt-4 space-y-0.5" aria-label="Sidebar Navigation">
-        {navItems.map(({ label, icon: Icon, active, count, href }) => {
+      <nav className="mt-4 min-h-0 flex-1 space-y-0.5 overflow-hidden" aria-label="Sidebar Navigation">
+        {navItems.map(({ label, icon: Icon, active, href }) => {
           const isItemActive =
             active ?? (href ? location.pathname === href : false);
 
@@ -75,17 +76,6 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
         })}
       </nav>
 
-      <p className="mt-5 px-2.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-        Stretch
-      </p>
-      <a
-        href="#"
-        className="mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
-      >
-        <FileText className="size-3.5" />
-        Audit log
-      </a>
-
       <div className="mt-auto flex items-center gap-2.5 border-t px-1 pt-3">
         <Avatar className="size-7">
           <AvatarFallback className="bg-slate-600 text-[10px] font-semibold text-white">
@@ -97,6 +87,16 @@ function Sidebar({ navItems, userRole }: SidebarProps) {
           <p className="text-[10px] text-slate-500">{currentRole}</p>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          void logout().then(() => navigate("/", { replace: true }));
+        }}
+        className="mt-2 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
+      >
+        <LogOut className="size-3.5" />
+        Sign out
+      </button>
     </aside>
   );
 }

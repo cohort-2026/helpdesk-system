@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -11,7 +11,7 @@ import { Input } from "#components/ui/input";
 import { Button } from "#components/ui/button";
 import TicketCard from "#components/ui/TicketCard";
 import { Alert, AlertDescription } from "#components/ui/alert";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth, type User } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router";
 import axios from "axios";
 
@@ -34,14 +34,37 @@ const tickets = [
   },
 ];
 
+const getHomePath = (role: User["role"]) => {
+  switch (role) {
+    case "Employee":
+      return "/employee";
+    case "Agent":
+      return "/agent";
+    case "Department Lead":
+      return "/department-lead";
+    case "System Admin":
+      return "/system-admin";
+    case "Platform Admin":
+      return "/platform-admin";
+    default:
+      return "/";
+  }
+};
+
 const SignIn = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      navigate(getHomePath(user.role), { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate, user]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     // console.log("Triggered")
@@ -50,7 +73,7 @@ const SignIn = () => {
     setError("");
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<{ user: User; expiresAt: number }>(
         `${import.meta.env.VITE_API_URL}/api/auth/login`,
         { email, password },
         { withCredentials: true },
@@ -58,32 +81,14 @@ const SignIn = () => {
 
       const user = response.data.user;
       // console.log(user);
-      login(user);
-
-      const role = user.role;
-      switch (role) {
-        case "Employee":
-          navigate("/employee");
-          break;
-        case "Agent":
-          navigate("/agent");
-          break;
-        case "Department Lead":
-          navigate("/department-lead");
-          break;
-        case "System Admin":
-          navigate("/system-admin");
-          break;
-        case "Platform Admin":
-          navigate("/platform-admin");
-          break;
-        default:
-          navigate("/");
-      }
+      login(user, response.data.expiresAt);
+      navigate(getHomePath(user.role), { replace: true });
       setLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.response?.data?.message || "An error occurred during sign in.",
+        (axios.isAxiosError<{ message?: string }>(err) &&
+          err.response?.data?.message) ||
+          "An error occurred during sign in.",
       );
       setLoading(false);
     }
@@ -163,7 +168,7 @@ const SignIn = () => {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || authLoading}
               className="h-9 w-full bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
             >
               {loading ? (

@@ -1,5 +1,5 @@
-import { Bell, Home, Inbox, Search, User } from "lucide-react"
-import { Link } from "react-router"
+import { Bell, Home, Inbox, LogOut, Search, User } from "lucide-react"
+import { Link, useNavigate } from "react-router"
 import { Avatar, AvatarFallback } from "#components/ui/avatar"
 import { Input } from "#components/ui/input"
 import { useAuth } from "#context/AuthContext"
@@ -17,7 +17,8 @@ export function AgentSidebar({
   myOpenCount,
   unassignedCount,
 }: AgentSidebarProps) {
-  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   const fullName  = [user?.name, user?.surname].filter(Boolean).join(" ") || "Agent"
   const initials  = fullName
@@ -34,7 +35,7 @@ export function AgentSidebar({
   ]
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col border-r bg-slate-50 md:flex">
+    <aside className="hidden h-screen min-h-0 w-56 shrink-0 flex-col overflow-hidden border-r bg-slate-50 md:flex">
       {/* Logo + bell */}
       <div className="flex items-center gap-2.5 px-4 pt-4">
         <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
@@ -59,7 +60,7 @@ export function AgentSidebar({
       </div>
 
       {/* Links */}
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 pt-3">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden px-3 pt-3">
         {NAV_ITEMS.map((item) => {
           const active = activePath === item.href
           return (
@@ -89,16 +90,28 @@ export function AgentSidebar({
       </nav>
 
       {/* Logged-in agent at the bottom */}
-      <div className="m-3 flex items-center gap-2 border-t pt-3">
-        <Avatar className="size-7">
-          <AvatarFallback className="bg-indigo-600 text-[10px] text-white">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 leading-tight">
-          <div className="truncate text-xs font-medium">{fullName}</div>
-          <div className="text-[11px] text-slate-500">{role}</div>
+      <div className="mt-auto px-3 pb-3">
+        <div className="flex items-center gap-2 border-t pt-3">
+          <Avatar className="size-7">
+            <AvatarFallback className="bg-indigo-600 text-[10px] text-white">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-xs font-medium">{fullName}</div>
+            <div className="text-[11px] text-slate-500">{role}</div>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            void logout().then(() => navigate("/", { replace: true }))
+          }}
+          className="mt-2 flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100"
+        >
+          <LogOut className="size-3.5" />
+          Sign out
+        </button>
       </div>
     </aside>
   )
