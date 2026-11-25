@@ -1,226 +1,249 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
+import {
+  ChevronLeft
+} from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogTrigger,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import TicketStatusBadge from "#components/TicketStatusBagde";
+import PersonAvatar from "#components/PersonAvatar";
+import WhoLine from "#components/WhoLine";
+import ProgressBar from "#components/ProgressBar";
+import Timeline from "#components/Timeline";
+import Composer from "#components/Composer";
+import DetailsCard from "#components/DetailsCard";
+import ChangeCard from "#components/ChangeCard";
+import ResolvedCard from "#components/ResolvedCard";
+import GreenCard from "#components/GreenCard";
+import RatingCard from "#components/RatingCard";
 
-type Ticket = {
-  ref: string;
-  title: string;
-  status: string;
-  category: string;
-  department: string;
-  priority: string;
-  submittedAt: string;
-  nextUpdateBy: string;
-  assigneeName: string;
-  timeline: {
-    id: string;
-    type: "event" | "reply";
-    who: string;
-    time: string;
-    text: string;
-    file?: string;
-  }[];
+const RESOLVE_WINDOW_DAYS = 5;
+
+const LERATO = { name: "Lerato Mokoena", initials: "LM", you: true, color: "bg-emerald-700" };
+const THABO = { name: "Thabo Nkosi", initials: "TN", team: "IT Support", color: "bg-indigo-700" };
+
+const at = (day, h, m) => new Date(2026, 10, day, h, m).toISOString();
+const todayAt = (h, m) => {
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
 };
 
-const STEPS = [
-  "Submitted",
-  "Assigned",
-  "Being worked on",
-  "Resolved",
-  "Closed",
-];
+const sampleRequest = {
+  id: "HD-1048",
+  title: "VPN drops every 10 minutes on home fibre",
+  status: "open",
+  category: "Network, Wi-Fi & VPN",
+  team: "IT Support",
+  priority: "high",
+  submittedAt: at(10, 8, 14),
+  nextUpdateAt: todayAt(16, 14),
+  resolvedAt: null,
+  approver: null,
+  agent: THABO,
+  timeline: [
+    { id: "t1", kind: "event", icon: "submitted", at: at(10, 8, 14), parts: ["You submitted this request \u00B7 Network, Wi-Fi & VPN"] },
+    {
+      id: "t2", kind: "reply", author: LERATO, at: at(10, 8, 14),
+      body: "Since Monday my VPN (FortiClient) disconnects roughly every 10 minutes when I work from home in Midrand. Office Wi-Fi is fine. Month-end close is Friday, so this is urgent for me.",
+      attachments: [],
+    },
+    { id: "t3", kind: "event", icon: "picked", at: at(10, 8, 31), parts: [{ b: "Thabo Nkosi" }, " picked this up"] },
+    {
+      id: "t4", kind: "reply", author: THABO, at: at(10, 9, 2),
+      body: "Hi Lerato, thanks for the detail. Please switch to the \u201CJohannesburg-TCP\u201D profile in FortiClient and follow the check in the attached guide. Send me a screenshot of the result and I'll take it from there.",
+      attachments: [{ name: "vpn-check-guide.pdf", size: "240 KB" }],
+    },
+    { id: "t5", kind: "event", icon: "waiting", at: at(10, 9, 2), parts: ["Status changed to ", { b: "Waiting on you", tone: "amber" }] },
+    {
+      id: "t6", kind: "reply", author: LERATO, at: at(10, 11, 40),
+      body: "Done, screenshot attached. The TCP profile has held for 40 minutes so far!",
+      attachments: [{ name: "vpn-check.png", size: "184 KB" }],
+    },
+    { id: "t7", kind: "event", icon: "status", at: at(10, 11, 40), parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you replied)"] },
+  ],
+};
 
-function stepFor(status: string) {
-  const s = (status || "").toLowerCase();
-  if (s.includes("closed")) return 5;
-  if (s.includes("resolved")) return 4;
-  if (
-    s.includes("progress") ||
-    s.includes("working") ||
-    s.includes("waiting") ||
-    s.includes("open")
-  )
-    return 3;
-  if (s.includes("unassign")) return 1;
-  if (s.includes("assign")) return 2;
-  return 1;
-}
+const dayDiff = (a, b) =>
+  Math.round(
+    (new Date(a.getFullYear(), a.getMonth(), a.getDate()) -
+      new Date(b.getFullYear(), b.getMonth(), b.getDate())) / 86_400_000
+  );
 
-export default function EmployeeTicketDetail() {
-  const params = useParams();
-  const id = params.id || params.ticketId || params.ticket_id;
-  const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [reply, setReply] = useState("");
+export default function HelpdeskRequestDetail({
+  request: initial = sampleRequest,
+  onBack,
+  onSendReply,
+  onCancelRequest,
+  onConfirmFixed,
+  onStillBroken,
+  onRate,
+}) {
+  const [request, setRequest] = useState(initial);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [rating, setRating] = useState(null);
 
-  useEffect(() => {
-    fetch(`/api/tickets/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const t = data.ticket || data;
-        setTicket({
-          ...t,
-          status: t.ticket_status || t.status,
-          category: t.ticket_category_name || t.category,
-          team: t.ticket_department_name || t.team,
-          priority: t.ticket_priority || t.priority,
-        });
+  const { status, agent } = request;
+  const terminal = status === "closed" || status === "cancelled";
+
+  // Adds a status change to the request and the public timeline
+  const change = (next, event) =>
+    setRequest((r) => ({
+      ...r,
+      status: next,
+      timeline: [...r.timeline, { id: crypto.randomUUID(), kind: "event", at: new Date().toISOString(), ...event }],
+    }));
+
+  const sendReply = ({ body, files }) => {
+    onSendReply?.({ body, files });
+    const reply = {
+      id: crypto.randomUUID(),
+      kind: "reply",
+      author: LERATO,
+      at: new Date().toISOString(),
+      body,
+      attachments: files.map((f) => ({ name: f.name, size: `${Math.max(1, Math.round(f.size / 1024))} KB` })),
+    };
+    setRequest((r) => ({ ...r, timeline: [...r.timeline, reply] }));
+    // Replying hands the ball back to the team
+    if (status === "waiting_on_you" || status === "resolved") {
+      change("open", {
+        icon: "status",
+        parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you replied)"],
       });
-  }, [id]);
+    }
+  };
 
-  if (!ticket) return <p className="p-6">Loading...</p>;
+  const cancel = () => {
+    onCancelRequest?.(request);
+    change("cancelled", { icon: "cancelled", parts: ["You cancelled this request"] });
+    setConfirmCancel(false);
+  };
 
-  const step = stepFor(ticket.status);
+  const confirmFixed = () => {
+    onConfirmFixed?.(request);
+    change("closed", {
+      icon: "fixed",
+      parts: ["You confirmed it's fixed \u00B7 Status changed to ", { b: "Closed", tone: "emerald" }],
+    });
+    setShowRating(true);
+  };
+
+  const stillBroken = () => {
+    onStillBroken?.(request);
+    change("open", {
+      icon: "status",
+      parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you said it's still broken)"],
+    });
+  };
+
+  const rate = (n) => {
+    setRating(n);
+    onRate?.(n);
+  };
+
+  const daysLeft = request.resolvedAt
+    ? Math.max(0, RESOLVE_WINDOW_DAYS - dayDiff(new Date(), new Date(request.resolvedAt)))
+    : RESOLVE_WINDOW_DAYS;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>{ticket.ref}</CardTitle>
-            <Badge>{ticket.status}</Badge>
-          </div>
-          <p className="text-lg font-medium">{ticket.title}</p>
-          <p className="text-sm text-muted-foreground">
-            {ticket.assigneeName} from {ticket.department} is working on this
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-indigo-600"
-              style={{ width: `${(step / 5) * 100}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs mt-2 text-muted-foreground">
-            {STEPS.map((s) => (
-              <span key={s}>{s}</span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-white">
 
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          {(ticket.timeline || []).map((item) =>
-            item.type === "event" ? (
-              <p key={item.id} className="text-sm text-muted-foreground">
-                {item.text} · {item.time}
-              </p>
-            ) : (
-              <div
-                key={item.id}
-                className="flex gap-3 border rounded-lg p-3 bg-white"
-              >
-                <Avatar>
-                  <AvatarFallback>
-                    {item.who.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">
-                    {item.who}{" "}
-                    <span className="text-muted-foreground">{item.time}</span>
-                  </p>
-                  <p className="text-sm mt-1">{item.text}</p>
-                  {item.file && (
-                    <p className="text-xs text-blue-600 mt-1">{item.file}</p>
-                  )}
-                </div>
-              </div>
-            ),
-          )}
-        </CardContent>
-      </Card>
+      <main className="mx-auto max-w-5xl space-y-5 px-6 py-5">
+        {/* Header */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
+          >
+            <ChevronLeft className="size-3.5" />
+            My requests
+          </button>
 
-      <Card>
-        ``
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-1">
-          <p>Reference: {ticket.ref}</p>
-          <p>Category: {ticket.category}</p>
-          <p>Team: {ticket.department}</p>
-          <p>Priority: {ticket.priority}</p>
-          <p>Submitted: {ticket.submittedAt}</p>
-          <p>Next update by: {ticket.nextUpdateBy}</p>
-        </CardContent>
-      </Card>
-
-      {ticket.status === "New" && (
-        <AlertDialog>
-          <AlertDialogTrigger>
-            <Button variant="destructive">Cancel request</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <p>Cancel this request?</p>
-            <div className="flex gap-2 justify-end">
-              <AlertDialogCancel>Keep it</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() =>
-                  fetch(`/api/tickets/${id}/cancel`, { method: "POST" })
-                }
-              >
-                Yes, cancel
-              </AlertDialogAction>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] text-slate-400">{request.id}</span>
+              <TicketStatusBadge status={status} />
             </div>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{request.title}</h1>
+            <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+              {agent && !["new", "pending_approval", "cancelled"].includes(status) && (
+                <PersonAvatar person={agent} className="size-4 [&_span]:text-[7px]" />
+              )}
+              <p>{WhoLine(request)}</p>
+            </div>
+          </div>
 
-      {ticket.status === "Resolved" && (
-        <div className="flex gap-2">
-          <Button
-            onClick={() =>
-              fetch(`/api/tickets/${id}/close`, { method: "POST" })
-            }
-          >
-            Yes, it&apos;s fixed
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() =>
-              fetch(`/api/tickets/${id}/reopen`, { method: "POST" })
-            }
-          >
-            Still broken
-          </Button>
+          <ProgressBar status={status} />
         </div>
-      )}
 
-      {ticket.status !== "Closed" && (
-        <Card>
-          <CardContent className="pt-6 space-y-2">
-            <Textarea
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              placeholder="Reply to Thabo..."
-            />
-            <Button
-              onClick={() =>
-                fetch(`/api/tickets/${id}/comments`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ body: reply }),
-                })
-              }
-            >
-              Send reply
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        {/* Body */}
+        <div className="grid gap-5 lg:grid-cols-[1fr_16rem]">
+          <section className="min-w-0 space-y-3" aria-label="Conversation">
+            <Timeline items={request.timeline} />
+            {!terminal && (
+              <Composer
+                placeholder={"Add a reply\u2026"}
+                onSend={sendReply}
+              />
+            )}
+          </section>
+
+          <aside className="space-y-3">
+            <DetailsCard request={request} />
+
+            {["new", "pending_approval", "assigned", "open", "waiting_on_you"].includes(status) && (
+              <ChangeCard
+                canCancel={status === "new" || status === "pending_approval"}
+                onCancel={() => setConfirmCancel(true)}
+              />
+            )}
+
+            {["assigned", "open", "waiting_on_you"].includes(status) && agent && (
+              <GreenCard title={`When agent resolves it`}>
+                <p>
+                  You'll get two buttons here:{" "}
+                  <strong className="font-semibold">Yes, it's fixed</strong> or{" "}
+                  <strong className="font-semibold">Still broken</strong> (for {RESOLVE_WINDOW_DAYS} days), then a quick rating.
+                </p>
+              </GreenCard>
+            )}
+
+            {status === "resolved" && agent && (
+              <ResolvedCard agent={agent} daysLeft={daysLeft} onFixed={confirmFixed} onStillBroken={stillBroken} />
+            )}
+
+            {status === "closed" && showRating && <RatingCard rating={rating} onRate={rate} />}
+          </aside>
+        </div>
+      </main>
+
+      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {request.team} will be told it's no longer needed. You can always submit a new request later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep request</AlertDialogCancel>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={cancel}>
+              Cancel request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
