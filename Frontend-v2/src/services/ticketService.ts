@@ -232,6 +232,25 @@ export const fetchTicketFeedback = async (ticketId: number): Promise<TicketFeedb
 };
 
 /**
+ * Update ticket details (e.g. priority, extra_fields, step).
+ * PUT /api/tickets/update/:id
+ */
+export const updateTicket = async (
+  ticketId: number,
+  data: Partial<Ticket> & { priority?: string; status?: string; step?: number; extra_fields?: Record<string, any> }
+): Promise<Ticket> => {
+  try {
+    const response = await api.put<{ message: string; ticket: Ticket }>(
+      `/tickets/update/${ticketId}`,
+      data
+    );
+    return response.data.ticket;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
+/**
  * Update ticket status.
  * PATCH /api/tickets/:id/status
  */

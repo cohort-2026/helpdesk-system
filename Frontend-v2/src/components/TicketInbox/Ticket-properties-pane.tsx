@@ -8,7 +8,9 @@ import { PRIORITY_LABEL, slaOf, type Status, type Ticket } from "./ticket-data"
 const STATUS_STYLE: Record<Status, { badge: string; dot: string }> = {
   Open: { badge: "border-blue-200 bg-blue-50 text-blue-700", dot: "bg-blue-500" },
   "Waiting on employee": { badge: "border-amber-200 bg-amber-50 text-amber-800", dot: "bg-amber-500" },
+  "Pending approval": { badge: "border-purple-200 bg-purple-50 text-purple-700", dot: "bg-purple-500" },
   Resolved: { badge: "border-emerald-200 bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+  Closed: { badge: "border-slate-300 bg-slate-100 text-slate-600", dot: "bg-slate-400" },
 }
 
 const PRIORITY_STYLE: Record<Priority, string> = {
@@ -39,21 +41,42 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function TicketPropertiesPane({
   ticket,
   onChangePriority,
+  onChangeStatus,
 }: {
   ticket: Ticket
   onChangePriority: (priority: Priority) => void
+  onChangeStatus?: (status: Status) => void
 }) {
-  const status = STATUS_STYLE[ticket.status]
+  const status = STATUS_STYLE[ticket.status] || STATUS_STYLE.Open
   const sla = slaOf(ticket)
 
   return (
-    <aside className="hidden w-64 shrink-0 overflow-y-auto border-l bg-white p-4 xl:block">
+    <aside className="flex w-64 shrink-0 flex-col overflow-y-auto border-l bg-white p-4">
       <Section title="PROPERTIES">
         <Row label="Status">
-          <Badge variant="outline" className={`h-5 gap-1 rounded-full px-2 py-0 text-[10px] ${status.badge}`}>
-            <span className={`size-1.5 rounded-full ${status.dot}`} />
-            {ticket.status === "Waiting on employee" ? "Waiting" : ticket.status}
-          </Badge>
+          {onChangeStatus ? (
+            <label className={`relative inline-flex h-6 items-center gap-1.5 rounded-full border px-2 py-0 text-[10px] ${status.badge}`}>
+              <span className={`size-1.5 rounded-full ${status.dot}`} />
+              <select
+                value={ticket.status}
+                onChange={(e) => onChangeStatus(e.target.value as Status)}
+                aria-label="Ticket Status"
+                className="cursor-pointer appearance-none bg-transparent text-[10px] font-medium outline-none pr-3"
+              >
+                <option value="Open">Open</option>
+                <option value="Waiting on employee">Waiting on employee</option>
+                <option value="Pending approval">Pending approval</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-1 size-2.5" />
+            </label>
+          ) : (
+            <Badge variant="outline" className={`h-5 gap-1 rounded-full px-2 py-0 text-[10px] ${status.badge}`}>
+              <span className={`size-1.5 rounded-full ${status.dot}`} />
+              {ticket.status}
+            </Badge>
+          )}
         </Row>
 
         <Row label="Priority">

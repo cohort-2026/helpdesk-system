@@ -1,7 +1,6 @@
-import { useState } from "react";
-import {
-  ChevronLeft
-} from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useParams, useNavigate } from "react-router";
+import { ChevronLeft } from "lucide-react";
 
 import {
   AlertDialog,
@@ -24,131 +23,366 @@ import ChangeCard from "#components/ChangeCard";
 import ResolvedCard from "#components/ResolvedCard";
 import GreenCard from "#components/GreenCard";
 import RatingCard from "#components/RatingCard";
+import { useAuth } from "#context/AuthContext";
+import * as ticketService from "../../services/ticketService";
+import type { Ticket as ApiTicket, TicketComment } from "../../types/ticket.types";
 
 const RESOLVE_WINDOW_DAYS = 5;
 
-const LERATO = { name: "Lerato Mokoena", initials: "LM", you: true, color: "bg-emerald-700" };
-const THABO = { name: "Thabo Nkosi", initials: "TN", team: "IT Support", color: "bg-indigo-700" };
-
-const at = (day, h, m) => new Date(2026, 10, day, h, m).toISOString();
-const todayAt = (h, m) => {
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d.toISOString();
-};
-
-const sampleRequest = {
-  id: "HD-1048",
-  title: "VPN drops every 10 minutes on home fibre",
-  status: "open",
-  category: "Network, Wi-Fi & VPN",
-  team: "IT Support",
-  priority: "high",
-  submittedAt: at(10, 8, 14),
-  nextUpdateAt: todayAt(16, 14),
-  resolvedAt: null,
-  approver: null,
-  agent: THABO,
-  timeline: [
-    { id: "t1", kind: "event", icon: "submitted", at: at(10, 8, 14), parts: ["You submitted this request \u00B7 Network, Wi-Fi & VPN"] },
-    {
-      id: "t2", kind: "reply", author: LERATO, at: at(10, 8, 14),
-      body: "Since Monday my VPN (FortiClient) disconnects roughly every 10 minutes when I work from home in Midrand. Office Wi-Fi is fine. Month-end close is Friday, so this is urgent for me.",
-      attachments: [],
-    },
-    { id: "t3", kind: "event", icon: "picked", at: at(10, 8, 31), parts: [{ b: "Thabo Nkosi" }, " picked this up"] },
-    {
-      id: "t4", kind: "reply", author: THABO, at: at(10, 9, 2),
-      body: "Hi Lerato, thanks for the detail. Please switch to the \u201CJohannesburg-TCP\u201D profile in FortiClient and follow the check in the attached guide. Send me a screenshot of the result and I'll take it from there.",
-      attachments: [{ name: "vpn-check-guide.pdf", size: "240 KB" }],
-    },
-    { id: "t5", kind: "event", icon: "waiting", at: at(10, 9, 2), parts: ["Status changed to ", { b: "Waiting on you", tone: "amber" }] },
-    {
-      id: "t6", kind: "reply", author: LERATO, at: at(10, 11, 40),
-      body: "Done, screenshot attached. The TCP profile has held for 40 minutes so far!",
-      attachments: [{ name: "vpn-check.png", size: "184 KB" }],
-    },
-    { id: "t7", kind: "event", icon: "status", at: at(10, 11, 40), parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you replied)"] },
-  ],
-};
-
-const dayDiff = (a, b) =>
+const dayDiff = (a: Date, b: Date) =>
   Math.round(
-    (new Date(a.getFullYear(), a.getMonth(), a.getDate()) -
-      new Date(b.getFullYear(), b.getMonth(), b.getDate())) / 86_400_000
+    (new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime() -
+      new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime()) /
+      86_400_000
   );
 
-export default function HelpdeskRequestDetail({
-  request: initial = sampleRequest,
-  onBack,
-  onSendReply,
-  onCancelRequest,
-  onConfirmFixed,
-  onStillBroken,
-  onRate,
+function mapApiStatusToUi(apiStatus: string, hasAssignee: boolean): string {
+  switch (apiStatus) {
+    case "Pending approval":
+      return "pending_approval";
+    case "Waiting on employee":
+      return "waiting_on_you";
+    case "Resolved":
+      return "resolved";
+    case "Closed":
+      return "closed";
+    case "Cancelled":
+      return "cancelled";
+    case "In progress":
+      return "open";
+    case "Open":
+    default:
+      return hasAssignee ? "open" : "new";
+  }
+}
+
+export default function EmployeeTicketDetail({
+  request: initialProp,
+  onBack: onBackProp,
+}: {
+  request?: any;
+  onBack?: () => void;
 }) {
-  const [request, setRequest] = useState(initial);
+  const { id: paramId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleBack = onBackProp || (() => navigate("/employee/my-requests"));
+
+  const rawId = paramId ? paramId.replace("HD-", "") : null;
+  const ticketIdNum = rawId && /^\d+$/.test(rawId) ? parseInt(rawId, 10) : null;
+
+  const [loading, setLoading] = useState<boolean>(!initialProp && !!ticketIdNum);
+  const [error, setError] = useState<string | null>(null);
+
+  const [apiTicket, setApiTicket] = useState<ApiTicket | null>(null);
+  const [comments, setComments] = useState<TicketComment[]>([]);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [showRating, setShowRating] = useState(false);
-  const [rating, setRating] = useState(null);
+  const [rating, setRating] = useState<number | null>(null);
+  const [optimisticEvents, setOptimisticEvents] = useState<any[]>([]);
+
+  // Current logged in user representation
+  const currentUserObj = useMemo(() => {
+    const fullName = [user?.name, user?.surname].filter(Boolean).join(" ") || "You";
+    const initials = fullName
+      .split(" ")
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .slice(0, 2)
+      .join("") || "ME";
+    return {
+      name: fullName,
+      initials,
+      you: true,
+      color: "bg-emerald-700",
+    };
+  }, [user]);
+
+  // Fetch ticket details, comments, and feedback
+  const loadTicket = useCallback(async () => {
+    if (!ticketIdNum) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const [ticketData, commentList, feedbackData] = await Promise.all([
+        ticketService.fetchTicketById(ticketIdNum),
+        ticketService.fetchTicketComments(ticketIdNum).catch(() => []),
+        ticketService.fetchTicketFeedback(ticketIdNum).catch(() => null),
+      ]);
+      setApiTicket(ticketData);
+      setComments(commentList);
+      if (feedbackData?.rating) {
+        setRating(feedbackData.rating);
+        setShowRating(true);
+      }
+    } catch (err) {
+      console.error("Failed to load ticket:", err);
+      setError(err instanceof Error ? err.message : "Failed to load ticket details");
+    } finally {
+      setLoading(false);
+    }
+  }, [ticketIdNum]);
+
+  useEffect(() => {
+    if (!initialProp && ticketIdNum) {
+      loadTicket();
+    }
+  }, [initialProp, ticketIdNum, loadTicket]);
+
+  // Build the request UI model
+  const request = useMemo(() => {
+    if (initialProp) return initialProp;
+    if (!apiTicket) return null;
+
+    const hasAssignee = !!apiTicket.assignee_id;
+    const uiStatus = mapApiStatusToUi(apiTicket.ticket_status, hasAssignee);
+
+    const agentObj = apiTicket.assignee_name
+      ? {
+          name: apiTicket.assignee_name,
+          initials: apiTicket.assignee_name
+            .split(" ")
+            .map((w) => w[0]?.toUpperCase() ?? "")
+            .slice(0, 2)
+            .join(""),
+          team: apiTicket.department_name || "Support",
+          color: "bg-indigo-700",
+        }
+      : null;
+
+    // Build timeline items
+    const timelineItems: any[] = [];
+
+    // 1. Creation event
+    timelineItems.push({
+      id: "ev_created",
+      kind: "event",
+      icon: "submitted",
+      at: apiTicket.created_at,
+      parts: [
+        "You submitted this request",
+        ...(apiTicket.category_name ? [" · ", apiTicket.category_name] : []),
+      ],
+    });
+
+    // 2. Initial request description as the first reply
+    if (apiTicket.description) {
+      timelineItems.push({
+        id: "ev_desc",
+        kind: "reply",
+        author: currentUserObj,
+        at: apiTicket.created_at,
+        body: apiTicket.description,
+        attachments: [],
+      });
+    }
+
+    // 3. Assignee picked up event
+    if (agentObj) {
+      timelineItems.push({
+        id: "ev_assigned",
+        kind: "event",
+        icon: "picked",
+        at: apiTicket.updated_at || apiTicket.created_at,
+        parts: [{ b: agentObj.name }, " picked this up"],
+      });
+    }
+
+    // 4. Server comments (only visible public comments for employees)
+    const sortedComments = [...comments].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    for (const c of sortedComments) {
+      if (c.is_internal) continue; // Employee cannot see internal notes
+      const isYou = String(c.author_id) === String(user?.id || user?.user_id);
+      const author = isYou
+        ? currentUserObj
+        : {
+            name: c.author_name || "Agent",
+            initials: (c.author_name || "Agent")
+              .split(" ")
+              .map((w) => w[0]?.toUpperCase() ?? "")
+              .slice(0, 2)
+              .join(""),
+            team: apiTicket.department_name || "Support",
+            color: "bg-indigo-700",
+          };
+
+      timelineItems.push({
+        id: `c_${c.comment_id}`,
+        kind: "reply",
+        author,
+        at: c.created_at,
+        body: c.body,
+        attachments: [],
+      });
+    }
+
+    // 5. Add optimistic events
+    for (const opt of optimisticEvents) {
+      timelineItems.push(opt);
+    }
+
+    return {
+      id: `HD-${apiTicket.ticket_id}`,
+      title: apiTicket.title,
+      status: uiStatus,
+      rawStatus: apiTicket.ticket_status,
+      category: apiTicket.category_name || "General",
+      team: apiTicket.department_name || "IT Support",
+      priority: (apiTicket.ticket_priority || "Low").toLowerCase(),
+      submittedAt: apiTicket.created_at,
+      nextUpdateAt: null,
+      resolvedAt:
+        apiTicket.ticket_status === "Resolved" || apiTicket.ticket_status === "Closed"
+          ? apiTicket.updated_at
+          : null,
+      approver: null,
+      agent: agentObj,
+      extra_fields: apiTicket.extra_fields || {},
+      timeline: timelineItems,
+    };
+  }, [initialProp, apiTicket, comments, currentUserObj, optimisticEvents, user]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <p className="mt-3 text-xs text-slate-500">Loading ticket details...</p>
+      </div>
+    );
+  }
+
+  if (error || !request) {
+    return (
+      <div className="mx-auto max-w-xl p-8 text-center">
+        <p className="text-sm font-medium text-red-600">{error || "Ticket not found"}</p>
+        <button
+          onClick={handleBack}
+          className="mt-4 inline-flex items-center gap-1 rounded-md bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+        >
+          <ChevronLeft className="size-3.5" /> Back to My Requests
+        </button>
+      </div>
+    );
+  }
 
   const { status, agent } = request;
   const terminal = status === "closed" || status === "cancelled";
 
-  // Adds a status change to the request and the public timeline
-  const change = (next, event) =>
-    setRequest((r) => ({
-      ...r,
-      status: next,
-      timeline: [...r.timeline, { id: crypto.randomUUID(), kind: "event", at: new Date().toISOString(), ...event }],
-    }));
+  const sendReply = async ({ body, files }: { body: string; files: any[] }) => {
+    if (!ticketIdNum) return;
 
-  const sendReply = ({ body, files }) => {
-    onSendReply?.({ body, files });
     const reply = {
       id: crypto.randomUUID(),
       kind: "reply",
-      author: LERATO,
+      author: currentUserObj,
       at: new Date().toISOString(),
       body,
-      attachments: files.map((f) => ({ name: f.name, size: `${Math.max(1, Math.round(f.size / 1024))} KB` })),
+      attachments: files.map((f) => ({
+        name: f.name,
+        size: `${Math.max(1, Math.round(f.size / 1024))} KB`,
+      })),
     };
-    setRequest((r) => ({ ...r, timeline: [...r.timeline, reply] }));
-    // Replying hands the ball back to the team
-    if (status === "waiting_on_you" || status === "resolved") {
-      change("open", {
-        icon: "status",
-        parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you replied)"],
-      });
+    setOptimisticEvents((prev) => [...prev, reply]);
+
+    try {
+      await ticketService.addTicketComment(ticketIdNum, body, false);
+
+      // If waiting on employee or resolved, replying re-opens the conversation
+      if (status === "waiting_on_you" || status === "resolved") {
+        await ticketService.updateTicketStatus(ticketIdNum, "Open");
+        setOptimisticEvents((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            kind: "event",
+            at: new Date().toISOString(),
+            parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you replied)"],
+          },
+        ]);
+      }
+      loadTicket();
+    } catch (err) {
+      console.error("Failed to send reply:", err);
     }
   };
 
-  const cancel = () => {
-    onCancelRequest?.(request);
-    change("cancelled", { icon: "cancelled", parts: ["You cancelled this request"] });
-    setConfirmCancel(false);
+  const cancel = async () => {
+    if (!ticketIdNum) return;
+    try {
+      await ticketService.updateTicketStatus(ticketIdNum, "Cancelled");
+      setOptimisticEvents((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          kind: "event",
+          at: new Date().toISOString(),
+          parts: ["You cancelled this request"],
+        },
+      ]);
+      setConfirmCancel(false);
+      loadTicket();
+    } catch (err) {
+      console.error("Failed to cancel ticket:", err);
+    }
   };
 
-  const confirmFixed = () => {
-    onConfirmFixed?.(request);
-    change("closed", {
-      icon: "fixed",
-      parts: ["You confirmed it's fixed \u00B7 Status changed to ", { b: "Closed", tone: "emerald" }],
-    });
-    setShowRating(true);
+  const confirmFixed = async () => {
+    if (!ticketIdNum) return;
+    try {
+      await ticketService.updateTicketStatus(ticketIdNum, "Closed");
+      setOptimisticEvents((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          kind: "event",
+          at: new Date().toISOString(),
+          parts: [
+            "You confirmed it's fixed · Status changed to ",
+            { b: "Closed", tone: "emerald" },
+          ],
+        },
+      ]);
+      setShowRating(true);
+      loadTicket();
+    } catch (err) {
+      console.error("Failed to close ticket:", err);
+    }
   };
 
-  const stillBroken = () => {
-    onStillBroken?.(request);
-    change("open", {
-      icon: "status",
-      parts: ["Status changed to ", { b: "Open", tone: "indigo" }, " (you said it's still broken)"],
-    });
+  const stillBroken = async () => {
+    if (!ticketIdNum) return;
+    try {
+      await ticketService.updateTicketStatus(ticketIdNum, "Open");
+      setOptimisticEvents((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          kind: "event",
+          at: new Date().toISOString(),
+          parts: [
+            "Status changed to ",
+            { b: "Open", tone: "indigo" },
+            " (you said it's still broken)",
+          ],
+        },
+      ]);
+      loadTicket();
+    } catch (err) {
+      console.error("Failed to reopen ticket:", err);
+    }
   };
 
-  const rate = (n) => {
+  const rate = async (n: number) => {
     setRating(n);
-    onRate?.(n);
+    if (!ticketIdNum) return;
+    try {
+      await ticketService.submitTicketFeedback(ticketIdNum, n);
+    } catch (err) {
+      console.error("Failed to submit feedback:", err);
+    }
   };
 
   const daysLeft = request.resolvedAt
@@ -157,13 +391,12 @@ export default function HelpdeskRequestDetail({
 
   return (
     <div className="min-h-screen bg-white">
-
       <main className="mx-auto max-w-5xl space-y-5 px-6 py-5">
         {/* Header */}
         <div className="space-y-3">
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBack}
             className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
           >
             <ChevronLeft className="size-3.5" />
@@ -175,7 +408,9 @@ export default function HelpdeskRequestDetail({
               <span className="font-mono text-[11px] text-slate-400">{request.id}</span>
               <TicketStatusBadge status={status} />
             </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{request.title}</h1>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+              {request.title}
+            </h1>
             <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
               {agent && !["new", "pending_approval", "cancelled"].includes(status) && (
                 <PersonAvatar person={agent} className="size-4 [&_span]:text-[7px]" />
@@ -193,7 +428,7 @@ export default function HelpdeskRequestDetail({
             <Timeline items={request.timeline} />
             {!terminal && (
               <Composer
-                placeholder={"Add a reply\u2026"}
+                placeholder={"Add a reply…"}
                 onSend={sendReply}
               />
             )}
@@ -220,10 +455,17 @@ export default function HelpdeskRequestDetail({
             )}
 
             {status === "resolved" && agent && (
-              <ResolvedCard agent={agent} daysLeft={daysLeft} onFixed={confirmFixed} onStillBroken={stillBroken} />
+              <ResolvedCard
+                agent={agent}
+                daysLeft={daysLeft}
+                onFixed={confirmFixed}
+                onStillBroken={stillBroken}
+              />
             )}
 
-            {status === "closed" && showRating && <RatingCard rating={rating} onRate={rate} />}
+            {(status === "closed" || showRating) && (
+              <RatingCard rating={rating} onRate={rate} />
+            )}
           </aside>
         </div>
       </main>
@@ -238,7 +480,10 @@ export default function HelpdeskRequestDetail({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep request</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={cancel}>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={cancel}
+            >
               Cancel request
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,4 +1,4 @@
-import { Paperclip } from "lucide-react";
+import { Paperclip, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";

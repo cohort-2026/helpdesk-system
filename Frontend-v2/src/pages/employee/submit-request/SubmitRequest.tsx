@@ -16,14 +16,21 @@ declare global {
 // From PDF p.14 - S5 Guided requests
 // Category comes from backend ONLY: GET /api/categories
 // Admin creates it. Employee never creates it. No constant here.
+type CategoryField = {
+  id: string;
+  label: string;
+  type: "text" | "number" | "longtext" | "date";
+  required: boolean;
+};
+
 type Category = {
   category_id: number;
   category_department_id: number;
   category_name: string;
   description?: string;
   status: string;
-  // not in your current response, see the note below
   department_name?: string;
+  extra_fields?: CategoryField[];
 };
 
 type DepartmentGroup = {
@@ -40,6 +47,7 @@ export default function SubmitRequest() {
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const [impact, setImpact] = useState("");
+  const [extraFieldValues, setExtraFieldValues] = useState<Record<string, string>>({});
   const [createdRef, setCreatedRef] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -98,11 +106,27 @@ export default function SubmitRequest() {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      const formattedExtraFields: Record<string, any> = {};
+      if (selected.extra_fields && Array.isArray(selected.extra_fields)) {
+        for (const f of selected.extra_fields) {
+          if (extraFieldValues[f.id] !== undefined && extraFieldValues[f.id] !== "") {
+            formattedExtraFields[f.label] = extraFieldValues[f.id];
+          }
+        }
+      }
+      if (impact) {
+        formattedExtraFields["Impact"] =
+          impact === "cant-work" ? "I can't work at all"
+          : impact === "slowed" ? "I'm slowed down, but I can work"
+          : "Minor inconvenience";
+      }
+
       const ticket = await createTicket({
         department_id: selected.category_department_id,
         category_id: selected.category_id,
         title,
         description: details,
+        extra_fields: formattedExtraFields,
       });
       setCreatedRef(`HD-${ticket.ticket_id}`);
       setStep(3);
@@ -271,13 +295,57 @@ export default function SubmitRequest() {
                 <option value="minor">Minor inconvenience</option>
               </select>
             </div>
+
+            {selected?.extra_fields && selected.extra_fields.length > 0 && (
+              <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+                <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                  Additional Information for {selected.category_name}
+                </h3>
+                {selected.extra_fields.map((f) => (
+                  <div key={f.id}>
+                    <label className="text-sm font-medium text-slate-800">
+                      {f.label} {f.required && <span className="text-red-500">*</span>}
+                    </label>
+                    {f.type === "longtext" ? (
+                      <textarea
+                        value={extraFieldValues[f.id] || ""}
+                        onChange={(e) =>
+                          setExtraFieldValues((prev) => ({ ...prev, [f.id]: e.target.value }))
+                        }
+                        rows={3}
+                        placeholder={`Enter ${f.label.toLowerCase()}`}
+                        className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm"
+                      />
+                    ) : (
+                      <input
+                        type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+                        value={extraFieldValues[f.id] || ""}
+                        onChange={(e) =>
+                          setExtraFieldValues((prev) => ({ ...prev, [f.id]: e.target.value }))
+                        }
+                        placeholder={`Enter ${f.label.toLowerCase()}`}
+                        className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex justify-between pt-2">
             <Button variant="outline" onClick={() => setStep(1)}>
               ← Back
             </Button>
             <Button
-              disabled={!title.trim() || !details.trim() || !impact || submitting}
+              disabled={
+                !title.trim() ||
+                !details.trim() ||
+                !impact ||
+                (selected?.extra_fields?.some(
+                  (f) => f.required && (!extraFieldValues[f.id] || !extraFieldValues[f.id].trim())
+                ) ?? false) ||
+                submitting
+              }
               onClick={handleSubmit}
               className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
             >

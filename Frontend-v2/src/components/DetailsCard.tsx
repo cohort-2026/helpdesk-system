@@ -6,10 +6,10 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const pad = (n) => String(n).padStart(2, "0");
 const clock = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const dayDiff = (a, b) =>
+const dayDiff = (a: any, b: any) =>
   Math.round(
-    (new Date(a.getFullYear(), a.getMonth(), a.getDate()) -
-      new Date(b.getFullYear(), b.getMonth(), b.getDate())) / 86_400_000
+    (new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime() -
+      new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime()) / 86_400_000
   );
 
 const fullStamp = (iso) => {
@@ -51,6 +51,12 @@ function DetailsCard({ request }) {
               </span>
             </DetailRow>
           )}
+          {request.extra_fields &&
+            Object.entries(request.extra_fields).map(([k, v]) => (
+              <DetailRow key={k} label={k}>
+                <span>{String(v)}</span>
+              </DetailRow>
+            ))}
         </dl>
       </CardContent>
     </Card>

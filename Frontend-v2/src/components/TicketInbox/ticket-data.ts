@@ -1,7 +1,7 @@
 import type { Priority } from "#components/AgentHome/prioritybadge"
 import type { SlaState } from "#components/AgentHome/sla-chip"
 
-export type Status = "Open" | "Waiting on employee" | "Resolved"
+export type Status = "Open" | "Waiting on employee" | "Pending approval" | "Resolved" | "Closed"
 
 export type Ticket = {
   id: string
@@ -47,8 +47,9 @@ export const firstName = (fullName: string) => fullName.split(" ")[0]
 
 // The time label to show for a ticket (changes when it is waiting or resolved)
 export function slaOf(t: Ticket): { state: SlaState; text: string } {
-  if (t.status === "Waiting on employee") return { state: "waiting", text: "Waiting" }
+  if (t.status === "Waiting on employee" || t.status === "Pending approval") return { state: "waiting", text: "Waiting" }
   if (t.status === "Resolved") return { state: "due", text: "Resolved" }
+  if (t.status === "Closed") return { state: "due", text: "Closed" }
   return { state: t.sla, text: t.slaText }
 }
 
