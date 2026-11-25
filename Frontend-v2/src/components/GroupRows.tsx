@@ -16,8 +16,24 @@ import {
   FileTextIcon,
   Building2Icon,
   AppWindowIcon,
-  Badge
 } from "lucide-react";
+import type { CategoryPriority } from "../services/categoryService";
+
+interface CategoryRow {
+  id: string;
+  name: string;
+  icon: string;
+  priority: CategoryPriority;
+  needsApproval: boolean;
+  fields: unknown[];
+  status: string;
+}
+
+interface GroupRowsProps {
+  group: { name: string; items: CategoryRow[] };
+  selected: string | null;
+  onSelect: (id: string) => void;
+}
 
 export const ICONS = {
   laptop: LaptopIcon,
@@ -29,9 +45,10 @@ export const ICONS = {
   letter: FileTextIcon,
   building: Building2Icon,
   software: AppWindowIcon,
+  default: AppWindowIcon,
 };
 
-function GroupRows({ group, selected, onSelect }) {
+function GroupRows({ group, selected, onSelect }: GroupRowsProps) {
   return (
     <>
       <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -41,7 +58,7 @@ function GroupRows({ group, selected, onSelect }) {
       </TableRow>
 
       {group.items.map((c) => {
-        const Icon = ICONS[c.icon] ?? ICONS.default;
+        const Icon = ICONS[c.icon as keyof typeof ICONS] ?? ICONS.default;
         const inactive = c.status === "inactive";
         const isSelected = selected === c.id;
         return (

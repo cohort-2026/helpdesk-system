@@ -10,20 +10,32 @@ import {
   SelectValue,
 } from "#components/ui/select";
 import { cn } from "#lib/utils";
+import type { ReactNode } from "react";
+import type { CategoryField, CategoryFieldType } from "../services/categoryService";
 
-const FIELD_TYPES = {
+const FIELD_TYPES: Record<CategoryFieldType, string> = {
   text: "Text",
   number: "Number",
   longtext: "Long text",
   date: "Date",
 };
 
-function FieldsBuilder({ fields, onChange, showErrors }) {
-  const update = (id, patch) =>
+interface FieldsBuilderProps {
+  fields: CategoryField[];
+  onChange: (fields: CategoryField[]) => void;
+  showErrors: boolean;
+}
+
+function FieldsBuilder({ fields, onChange, showErrors }: FieldsBuilderProps) {
+  const update = (id: string, patch: Partial<CategoryField>) =>
     onChange(fields.map((f) => (f.id === id ? { ...f, ...patch } : f)));
-  const remove = (id) => onChange(fields.filter((f) => f.id !== id));
-  const add = () => onChange([...fields, field("", "text")]);
-  const move = (index, dir) => {
+  const remove = (id: string) => onChange(fields.filter((f) => f.id !== id));
+  const add = () =>
+    onChange([
+      ...fields,
+      { id: crypto.randomUUID(), label: "", type: "text", required: true },
+    ]);
+  const move = (index: number, dir: number) => {
     const next = [...fields];
     const target = index + dir;
     if (target < 0 || target >= next.length) return;
@@ -31,9 +43,9 @@ function FieldsBuilder({ fields, onChange, showErrors }) {
     onChange(next);
   };
 
-  function FieldError({ children }) {
-  return children ? <p className="text-[11px] text-red-600">{children}</p> : null;
-}
+  function FieldError({ children }: { children?: ReactNode }) {
+    return children ? <p className="text-[11px] text-red-600">{children}</p> : null;
+  }
 
   return (
     <div className="space-y-2">
@@ -78,7 +90,12 @@ function FieldsBuilder({ fields, onChange, showErrors }) {
               className="h-7 min-w-0 flex-1 border-0 px-1 text-xs shadow-none focus-visible:ring-1"
             />
 
-            <Select value={f.type} onValueChange={(type) => update(f.id, { type })}>
+            <Select
+              value={f.type}
+              onValueChange={(type) =>
+                type && update(f.id, { type: type as CategoryFieldType })
+              }
+            >
               <SelectTrigger aria-label="Field type" className="h-7 w-[88px] gap-1 px-2 text-[10px]">
                 <SelectValue />
               </SelectTrigger>

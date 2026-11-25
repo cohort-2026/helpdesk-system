@@ -1,24 +1,57 @@
 import { pool } from "../config/database";
 
+export interface CategoryField {
+  id: string;
+  label: string;
+  type: "text" | "number" | "longtext" | "date";
+  required: boolean;
+}
+
+export interface CategoryInput {
+  departmentId: number;
+  name: string;
+  description: string | null;
+  status: string;
+  defaultPriority: string;
+  needsApproval: boolean;
+  extraFields: CategoryField[];
+}
+
+export interface CategoryUpdate {
+  departmentId?: number;
+  name?: string;
+  description?: string | null;
+  status?: string;
+  defaultPriority?: string;
+  needsApproval?: boolean;
+  extraFields?: CategoryField[];
+}
+
 const CATEGORY_WITH_DEPARTMENT = `
   SELECT c.*, d.department_name
   FROM category c
   LEFT JOIN department d ON d.department_id = c.category_department_id
 `;
 
-export const createCategory = async (
-  departmentId: number,
-  name: string,
-  description: string | null,
-  status: string
-) => {
+export const createCategory = async (input: CategoryInput) => {
   const result = await pool.query(
-    `INSERT INTO category (category_department_id, category_name, description, status)
-     VALUES ($1, $2, $3, $4)
-     RETURNING *`,
-    [departmentId, name, description, status]
+    `INSERT INTO category (
+       category_department_id, category_name, description, status,
+       default_priority, needs_approval, extra_fields
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+     RETURNING category_id`,
+    [
+      input.departmentId,
+      input.name,
+      input.description,
+      input.status,
+      input.defaultPriority,
+      input.needsApproval,
+      JSON.stringify(input.extraFields),
+    ]
   );
-  return result.rows[0];
+  return getCategoryById(result.rows[0].category_id);
 };
 
 export const getCategoriesByDepartment = async (
@@ -54,23 +87,38 @@ export const getCategoryById = async (id: number) => {
   return result.rows[0];
 };
 
-export const updateCategory = async (
-  id: number,
-  name: string | null,
-  description: string | null,
-  status: string | null
-) => {
-  const result = await pool.query(
+export const updateCategory = async (id: number, updates: CategoryUpdate) => {
+  const columns: Record<keyof CategoryUpdate, string> = {
+    departmentId: "category_department_id",
+    name: "category_name",
+    description: "description",
+    status: "status",
+    defaultPriority: "default_priority",
+    needsApproval: "needs_approval",
+    extraFields: "extra_fields",
+  };
+  const fields: string[] = [];
+  const values: unknown[] = [];
+
+  for (const key of Object.keys(columns) as (keyof CategoryUpdate)[]) {
+    const value = updates[key];
+    if (value === undefined) continue;
+
+    values.push(key === "extraFields" ? JSON.stringify(value) : value);
+    const cast = key === "extraFields" ? "::jsonb" : "";
+    fields.push(`${columns[key]} = $${values.length}${cast}`);
+  }
+
+  if (fields.length === 0) return getCategoryById(id);
+
+  values.push(id);
+  await pool.query(
     `UPDATE category
-     SET category_name = COALESCE($1, category_name),
-         description = COALESCE($2, description),
-         status = COALESCE($3, status),
-         updated_at = NOW()
-     WHERE category_id = $4
-     RETURNING *`,
-    [name, description, status, id]
+     SET ${fields.join(", ")}, updated_at = NOW()
+     WHERE category_id = $${values.length}`,
+    values
   );
-  return result.rows[0];
+  return getCategoryById(id);
 };
 
 export const categoryIsUsed = async (id: number) => {

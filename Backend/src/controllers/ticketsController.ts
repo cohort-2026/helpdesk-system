@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import * as categoryService from "../services/categoryService";
 import * as ticketService from "../services/ticketService";
 import {
   TicketPriority,
@@ -158,9 +159,21 @@ export const createTicket = async (req: Request, res: Response) => {
     }
 
     if (parsedCatId !== null) {
-      const catExists = await ticketService.checkCategoryExists(parsedCatId);
-      if (!catExists) {
+      const category = await categoryService.getCategoryById(parsedCatId);
+      if (!category) {
         return res.status(400).json({ message: "Category not found with the provided ID." });
+      }
+
+      if (priority === undefined || priority === null) {
+        const categoryPriority = String(category.default_priority || "normal").toLowerCase();
+        validatedPriority =
+          categoryPriority === "low" ? "Low"
+          : categoryPriority === "high" || categoryPriority === "urgent" ? "High"
+          : "Medium";
+      }
+
+      if ((status === undefined || status === null) && category.needs_approval) {
+        validatedStatus = "Pending approval";
       }
     }
 
