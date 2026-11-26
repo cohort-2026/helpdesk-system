@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { useTickets } from "#hooks/useTickets";
 import { Button } from "../../../components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
+import TicketStatusBadge from "#components/TicketStatusBagde";
+import PersonAvatar from "#components/PersonAvatar";
 
 const tabs = ["Active", "Waiting on you", "Resolved", "Closed", "Cancelled"];
 
@@ -163,9 +165,28 @@ export default function MyRequests() {
               </div>
               <span className="w-32 shrink-0 rounded-full border px-2 py-1 text-center text-xs capitalize">
                 {ticket.ticket_status}
+                {/* <TicketStatusBadge status={ticket.ticket_status.toLowerCase()} /> */}
               </span>
               <span className="flex-1 text-sm">
-                {ticket.assignee_name || "Unassigned"}
+                {ticket.assignee_name ? (
+                  <>
+                    <PersonAvatar
+                      person={{
+                        initials: ticket.assignee_name
+                          .split(/\s+/)
+                          .map((part) => part[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase(),
+                        color: "bg-blue-500",
+                      }}
+                      className="mr-2"
+                    />
+                    {ticket.assignee_name}
+                  </>
+                ) : (
+                  "Unassigned"
+                )}
               </span>
               <span className="text-xs text-muted-foreground">
                 {formatCreatedAt(ticket.created_at)}

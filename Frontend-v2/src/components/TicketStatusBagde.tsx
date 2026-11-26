@@ -14,6 +14,7 @@ const STATUSES = {
 
 function TicketStatusBadge({ status }) {
   const s = STATUSES[status];
+  console.log("TicketStatusBadge", status,s);
   return (
     <Badge variant="outline" className={cn("gap-1.5 rounded-full px-2 py-0 text-[10px] font-medium", s.badge)}>
       <span className={cn("size-1.5 rounded-full", s.dot)} />
