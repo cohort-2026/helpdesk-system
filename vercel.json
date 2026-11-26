@@ -5,10 +5,6 @@
       "root": "Backend",
       "framework": "express"
     },
-    "frontend": {
-      "root": "Frontend",
-      "framework": "vite"
-    },
     "frontend-v2": {
       "root": "Frontend-v2",
       "framework": "vite"
