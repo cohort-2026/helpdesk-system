@@ -6,7 +6,9 @@ import { sendPasswordResetEmail } from "../utils/mailer";
 import crypto from "crypto";
 
 const isProd = process.env.NODE_ENV === "production";
-
+const COOKIE_NAME = "session";
+const SESSION_TTL_SECONDS = 60 * 60;
+const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: isProd,                        
