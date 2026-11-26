@@ -5,16 +5,16 @@ import jwt from "jsonwebtoken";
 import { sendPasswordResetEmail } from "../utils/mailer";
 import crypto from "crypto";
 
-const COOKIE_NAME = "session";
-const SESSION_TTL_SECONDS = 60 * 60;
-const SESSION_TTL_MS = SESSION_TTL_SECONDS * 1000;
+const isProd = process.env.NODE_ENV === "production";
+
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure: isProd,                        
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
     maxAge: SESSION_TTL_MS,
     path: "/",
 };
+
 const CLEAR_COOKIE_OPTIONS = {
     httpOnly: COOKIE_OPTIONS.httpOnly,
     secure: COOKIE_OPTIONS.secure,
