@@ -1,5 +1,5 @@
 export type TicketPriority = "High" | "Medium" | "Low";
-export type TicketStatus = "Open" | "In progress" | "Pending approval" | "Resolved" | "Closed" | "Cancelled";
+export type TicketStatus = "Open" | "In progress" | "Pending approval" | "Resolved" | "Closed" | "Cancelled" | "Waiting on employee";
 
 export const VALID_PRIORITIES: TicketPriority[] = ["High", "Medium", "Low"];
 export const VALID_STATUSES: TicketStatus[] = [
@@ -8,7 +8,8 @@ export const VALID_STATUSES: TicketStatus[] = [
   "Pending approval",
   "Resolved",
   "Closed",
-  "Cancelled"
+  "Cancelled",
+  "Waiting on employee"
 ];
 
 export interface Ticket {
@@ -32,6 +33,8 @@ export interface Ticket {
   requester_email?: string | null;
   assignee_name?: string | null;
   assignee_email?: string | null;
+  step?: number;
+  extra_fields?: Record<string, any>;
 }
 
 export interface TicketComment {
@@ -86,6 +89,8 @@ export interface CreateTicketDto {
   request_type_id?: number | null;
   requester_id: string;
   assignee_id?: string | null;
+  step?: number;
+  extra_fields?: Record<string, any>;
 }
 
 export interface UpdateTicketDto {
@@ -97,6 +102,8 @@ export interface UpdateTicketDto {
   category_id?: number | null;
   request_type_id?: number | null;
   assignee_id?: string | null;
+  step?: number;
+  extra_fields?: Record<string, any>;
 }
 
 export interface TicketFilters {
@@ -105,6 +112,8 @@ export interface TicketFilters {
   department_id?: number | null;
   creator_id?: string | null;
   assignee_id?: string | null;
+  step?: number;
+  extra_fields?: Record<string, any>;
   search?: string | null;
   page: number;
   limit: number;

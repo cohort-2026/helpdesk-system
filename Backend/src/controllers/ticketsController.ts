@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import * as categoryService from "../services/categoryService";
 import * as ticketService from "../services/ticketService";
 import {
   TicketPriority,
@@ -51,7 +52,9 @@ export const createTicket = async (req: Request, res: Response) => {
     request_type_id,
     ticket_request_type_id,
     assignee_id,
-    requester_id
+    requester_id,
+    extra_fields,
+    step
   } = req.body;
 
   const errors: string[] = [];
@@ -68,9 +71,9 @@ export const createTicket = async (req: Request, res: Response) => {
     errors.push("Description must be a string.");
   }
 
-  // Priority validation
+  // Priority validation - employees are not allowed to set priority (set by agent)
   let validatedPriority: TicketPriority = "Low";
-  if (priority !== undefined && priority !== null) {
+  if (user.role !== "Employee" && priority !== undefined && priority !== null) {
     const norm = normalizePriority(String(priority));
     if (!norm) {
       errors.push(`Priority must be one of: ${VALID_PRIORITIES.join(", ")}.`);
@@ -158,9 +161,21 @@ export const createTicket = async (req: Request, res: Response) => {
     }
 
     if (parsedCatId !== null) {
-      const catExists = await ticketService.checkCategoryExists(parsedCatId);
-      if (!catExists) {
+      const category = await categoryService.getCategoryById(parsedCatId);
+      if (!category) {
         return res.status(400).json({ message: "Category not found with the provided ID." });
+      }
+
+      if (priority === undefined || priority === null) {
+        const categoryPriority = String(category.default_priority || "normal").toLowerCase();
+        validatedPriority =
+          categoryPriority === "low" ? "Low"
+          : categoryPriority === "high" || categoryPriority === "urgent" ? "High"
+          : "Medium";
+      }
+
+      if ((status === undefined || status === null) && category.needs_approval) {
+        validatedStatus = "Pending approval";
       }
     }
 
@@ -194,7 +209,9 @@ export const createTicket = async (req: Request, res: Response) => {
       category_id: parsedCatId,
       request_type_id: parsedReqTypeId,
       requester_id: resolvedRequesterId,
-      assignee_id: parsedAssigneeId
+      assignee_id: parsedAssigneeId,
+      extra_fields: typeof extra_fields === "object" && extra_fields !== null ? extra_fields : {},
+      step: typeof step === "number" ? step : 0,
     };
 
     const ticket = await ticketService.createTicket(newTicketDto);
@@ -378,9 +395,9 @@ export const updateTicket = async (req: Request, res: Response) => {
       }
       if (status !== undefined) {
         const norm = normalizeStatus(String(status));
-        if (norm !== "Cancelled") {
+        if (norm && !["Cancelled", "Closed", "Open"].includes(norm)) {
           return res.status(403).json({
-            message: "Forbidden: Employees can only change ticket status to 'Cancelled'."
+            message: "Forbidden: Employees can only change ticket status to 'Cancelled', 'Closed', or 'Open'."
           });
         }
       }
@@ -424,6 +441,13 @@ export const updateTicket = async (req: Request, res: Response) => {
       } else {
         updateData.status = norm;
       }
+    }
+
+    if (req.body.extra_fields !== undefined) {
+      updateData.extra_fields = typeof req.body.extra_fields === "object" && req.body.extra_fields !== null ? req.body.extra_fields : {};
+    }
+    if (req.body.step !== undefined && typeof req.body.step === "number") {
+      updateData.step = req.body.step;
     }
 
     // Validate department_id

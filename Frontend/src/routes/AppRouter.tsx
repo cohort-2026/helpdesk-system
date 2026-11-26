@@ -43,7 +43,6 @@ const AppRouter = () => {
           <Route path="/employee" element={<EmployeeHomePage />}>
             <Route index element={<EmployeeDashboard />} />
             <Route path="my-requests" element={<EmployeeDashboard />} />
-            <Route path="tickets/:id" element={<TicketDetails />} />
             <Route path="submit-request" element={<EmployeeSubmitRequest />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
@@ -56,7 +55,6 @@ const AppRouter = () => {
             <Route path="ticket-queue" element={<TicketQueue />} />
             <Route path="assigned-tickets" element={<AssignedTickets />} />
             <Route path="resolved-tickets" element={<ResolvedTickets />} />
-            <Route path="tickets/:id" element={<TicketDetails />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
@@ -68,7 +66,6 @@ const AppRouter = () => {
             <Route path="approvals" element={<Approvals />} />
             <Route path="team" element={<TeamAgents />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="tickets/:id" element={<TicketDetails />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
@@ -79,7 +76,6 @@ const AppRouter = () => {
             <Route path="users" element={<Users />} />
             <Route path="departments" element={<Departments />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="tickets/:id" element={<TicketDetails />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
         </Route>
@@ -88,9 +84,25 @@ const AppRouter = () => {
         <Route element={<ProtectedRoute allowedRoles={["Platform Admin"]} />}>
           <Route path="/platform-admin" element={<PlatformAdminHomePage />}>
             <Route path="users" element={<Users />} />
-            <Route path="tickets/:id" element={<TicketDetails />} />
             <Route path="profile" element={<UserProfile />} />
           </Route>
+        </Route>
+
+        {/* Shared Ticket Details - all roles */}
+        <Route
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                "Employee",
+                "Agent",
+                "Department Lead",
+                "System Admin",
+                "Platform Admin",
+              ]}
+            />
+          }
+        >
+          <Route path="/tickets/:id" element={<TicketDetails />} />
         </Route>
 
         {/* Fallback Route */}

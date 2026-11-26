@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useTickets } from "../../hooks/useTickets";
 import { useToast } from "../../components/ui/Toast";
 import type { Ticket } from "../../types/ticket.types";
@@ -12,10 +13,14 @@ const ResolvedTickets = () => {
   const { toastElement, showToast } = useToast();
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>("all");
-
+  const navigate = useNavigate();
   const userId = user?.id || user?.user_id || "";
 
-  const { tickets: allTickets, loading, error } = useTickets({
+  const {
+    tickets: allTickets,
+    loading,
+    error,
+  } = useTickets({
     filters: {
       assignee_id: userId ? String(userId) : undefined,
       limit: 100,
@@ -25,7 +30,7 @@ const ResolvedTickets = () => {
 
   // Only show Resolved / Closed tickets
   const resolvedTickets = allTickets.filter(
-    (t) => t.ticket_status === "Resolved" || t.ticket_status === "Closed"
+    (t) => t.ticket_status === "Resolved" || t.ticket_status === "Closed",
   );
 
   const now = new Date();
@@ -50,7 +55,9 @@ const ResolvedTickets = () => {
     const matchesSearch =
       `HD-${ticket.ticket_id}`.toLowerCase().includes(search.toLowerCase()) ||
       ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-      (ticket.requester_name || "").toLowerCase().includes(search.toLowerCase());
+      (ticket.requester_name || "")
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
     let matchesDate = true;
     const dateToCheck = ticket.updated_at || ticket.created_at;
@@ -87,9 +94,7 @@ const ResolvedTickets = () => {
 
       {/* Page Heading */}
       <div>
-        <h1 className="text-2xl font-bold text-body-text">
-          Resolved Tickets
-        </h1>
+        <h1 className="text-2xl font-bold text-body-text">Resolved Tickets</h1>
         <p className="mt-1 text-sm text-gray-500">
           Review tickets you have previously resolved or closed.
         </p>
@@ -97,8 +102,6 @@ const ResolvedTickets = () => {
 
       {/* Ticket History */}
       <div className="rounded-xl p-5 shadow-sm">
- 
-
         {/* Search and Date Filter */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {/* Search */}
@@ -126,10 +129,7 @@ const ResolvedTickets = () => {
         </div>
 
         {/* Loading State */}
-        {loading && (
-           <Loader/>
-
-        )}
+        {loading && <Loader />}
 
         {/* Resolved Ticket Cards */}
         {!loading && (
@@ -138,6 +138,7 @@ const ResolvedTickets = () => {
               filteredTickets.map((ticket: Ticket) => (
                 <div
                   key={ticket.ticket_id}
+                  onClick={() => navigate(`/tickets/${ticket.ticket_id}`)}
                   className="rounded-xl border border-gray-200 p-4 transition hover:border-[#6A89A7] hover:shadow-sm"
                 >
                   <div className="flex flex-col gap-3">
@@ -165,7 +166,9 @@ const ResolvedTickets = () => {
 
                     {/* Ticket Details */}
                     <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-500">
-                      <span>Reporter: {ticket.requester_name || "Unknown"}</span>
+                      <span>
+                        Reporter: {ticket.requester_name || "Unknown"}
+                      </span>
                       {ticket.department_name && (
                         <span>Department: {ticket.department_name}</span>
                       )}
@@ -175,7 +178,8 @@ const ResolvedTickets = () => {
                     {/* Resolution Information */}
                     <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
                       <span>
-                        Updated: {formatDate(ticket.updated_at || ticket.created_at)}
+                        Updated:{" "}
+                        {formatDate(ticket.updated_at || ticket.created_at)}
                       </span>
                     </div>
                   </div>
