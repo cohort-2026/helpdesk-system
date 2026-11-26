@@ -50,38 +50,41 @@ export function TicketConversationPane({
         </p>
         <h1 className="mt-0.5 text-sm font-semibold">{ticket.title}</h1>
 
-        <div className="mt-3 flex items-center gap-1.5">
-          {/* Only show the moves that make sense for the current status */}
-          {ticket.status === "Open" && (
-            <>
-              <Button variant="outline" onClick={() => onSetStatus("Waiting on employee")} className="h-7 rounded-md px-2.5 text-[11px]">
-                Waiting on employee
-              </Button>
-              <Button onClick={() => onSetStatus("Resolved")} className="h-7 gap-1 rounded-md bg-indigo-600 px-2.5 text-[11px] text-white hover:bg-indigo-700">
-                <Check className="size-3" /> Resolve
-              </Button>
-            </>
-          )}
-          {ticket.status === "Waiting on employee" && (
-            <>
-              <Button variant="outline" onClick={() => onSetStatus("Open")} className="h-7 rounded-md px-2.5 text-[11px]">
-                Back to open
-              </Button>
-              <Button onClick={() => onSetStatus("Resolved")} className="h-7 gap-1 rounded-md bg-indigo-600 px-2.5 text-[11px] text-white hover:bg-indigo-700">
-                <Check className="size-3" /> Resolve
-              </Button>
-            </>
-          )}
-          {ticket.status === "Resolved" && (
-            <Button variant="outline" onClick={() => onSetStatus("Open")} className="h-7 rounded-md px-2.5 text-[11px]">
-              Reopen
-            </Button>
-          )}
-          {/* These three do nothing yet */}
-          <Button variant="ghost" className="h-7 px-2.5 text-[11px]">Reassign</Button>
-          <Button variant="ghost" className="h-7 px-2.5 text-[11px]">Move</Button>
-          <Button variant="ghost" aria-label="More" className="h-7 px-2">
-            <MoreHorizontal className="size-3.5" />
+        <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+          <Button
+            variant={ticket.status === "Open" ? "secondary" : "outline"}
+            onClick={() => onSetStatus("Open")}
+            className="h-7 rounded-md px-2.5 text-[11px]"
+          >
+            Open
+          </Button>
+          <Button
+            variant={ticket.status === "Waiting on employee" ? "secondary" : "outline"}
+            onClick={() => onSetStatus("Waiting on employee")}
+            className="h-7 rounded-md px-2.5 text-[11px]"
+          >
+            Waiting on employee
+          </Button>
+          <Button
+            variant={ticket.status === "Pending approval" ? "secondary" : "outline"}
+            onClick={() => onSetStatus("Pending approval")}
+            className="h-7 rounded-md px-2.5 text-[11px]"
+          >
+            Pending approval
+          </Button>
+          <Button
+            variant={ticket.status === "Resolved" ? "secondary" : "default"}
+            onClick={() => onSetStatus("Resolved")}
+            className="h-7 gap-1 rounded-md bg-indigo-600 px-2.5 text-[11px] text-white hover:bg-indigo-700"
+          >
+            <Check className="size-3" /> Resolve
+          </Button>
+          <Button
+            variant={ticket.status === "Closed" ? "secondary" : "outline"}
+            onClick={() => onSetStatus("Closed")}
+            className="h-7 rounded-md px-2.5 text-[11px]"
+          >
+            Close
           </Button>
         </div>
       </div>

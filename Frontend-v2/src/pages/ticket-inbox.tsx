@@ -28,8 +28,10 @@ function toPriority(p: string): Priority {
 
 /** Map API TicketStatus → the UI Status enum */
 function toUiStatus(s: string): Status {
-  if (s === "Resolved" || s === "Closed") return "Resolved"
-  if (s === "Pending approval")           return "Waiting on employee"
+  if (s === "Resolved") return "Resolved"
+  if (s === "Closed") return "Closed"
+  if (s === "Pending approval") return "Pending approval"
+  if (s === "Waiting on employee") return "Waiting on employee"
   return "Open"
 }
 
@@ -155,9 +157,25 @@ export default function TicketInbox() {
     : undefined
 
   const ticket = uiTickets.find((t) => t.id === normalizedId)
+  const [singleTicket, setSingleTicket] = useState<Ticket | null>(null)
+
+  useEffect(() => {
+    if (normalizedId && !ticket) {
+      const numId = parseInt(normalizedId.replace("HD-", ""), 10)
+      if (!isNaN(numId)) {
+        ticketService.fetchTicketById(numId)
+          .then((t) => setSingleTicket(toUiTicket(t)))
+          .catch(() => setSingleTicket(null))
+      }
+    } else {
+      setSingleTicket(null)
+    }
+  }, [normalizedId, ticket])
+
+  const activeTicket = ticket || singleTicket
   // Also find the raw API ticket for operations that need ticket_id (number)
-  const apiTicketId = ticket
-    ? parseInt(ticket.id.replace("HD-", ""), 10)
+  const apiTicketId = activeTicket
+    ? parseInt(activeTicket.id.replace("HD-", ""), 10)
     : null
 
   /* ---- Timeline state (server comments + local optimistic additions) ---- */
@@ -174,7 +192,7 @@ export default function TicketInbox() {
       .then((comments) => {
         setTimelines((prev) => ({
           ...prev,
-          [normalizedId!]: comments.map(commentToTimeline),
+          [(activeTicket?.id || normalizedId)!]: comments.map(commentToTimeline),
         }))
       })
       .catch(() => {
@@ -200,19 +218,21 @@ export default function TicketInbox() {
   /* ---- Status change — calls API then refreshes list ---- */
   const setStatus = useCallback(
     async (status: Status) => {
-      if (!ticket || !apiTicketId) return
+      if (!activeTicket || !apiTicketId) return
 
       // Map UI Status → API TicketStatus
       const apiStatus =
         status === "Resolved"             ? "Resolved"
-        : status === "Waiting on employee" ? "Pending approval"
-        : "In progress"
+        : status === "Closed"             ? "Closed"
+        : status === "Pending approval"   ? "Pending approval"
+        : status === "Waiting on employee"? "Waiting on employee"
+        : "Open"
 
       // Optimistic local update
       setTimelines((old) => ({
         ...old,
-        [ticket.id]: [
-          ...(old[ticket.id] ?? []),
+        [activeTicket.id]: [
+          ...(old[activeTicket.id] ?? []),
           makeEvent(`${agentName} set status to ${status}`),
         ],
       }))
@@ -220,18 +240,21 @@ export default function TicketInbox() {
       try {
         await ticketService.updateTicketStatus(apiTicketId, apiStatus)
         refetch()
+        if (singleTicket) {
+          setSingleTicket((prev) => prev ? { ...prev, status } : null)
+        }
       } catch {
         // If API call fails the UI shows the event but refetch will reconcile
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ticket, apiTicketId, agentName],
+    [activeTicket, apiTicketId, agentName, singleTicket],
   )
 
   /* ---- Priority change — calls API then refreshes list ---- */
   const changePriority = useCallback(
     async (priority: Priority) => {
-      if (!ticket || priority === ticket.priority || !apiTicketId) return
+      if (!activeTicket || priority === activeTicket.priority || !apiTicketId) return
 
       const apiPriority =
         priority === "urgent" ? "High"
@@ -240,29 +263,30 @@ export default function TicketInbox() {
         : "Low"
 
       addToTimeline(
-        ticket.id,
+        activeTicket.id,
         makeEvent(
-          `${agentName} changed priority ${PRIORITY_LABEL[ticket.priority]} → ${PRIORITY_LABEL[priority]}`,
+          `${agentName} changed priority ${PRIORITY_LABEL[activeTicket.priority]} → ${PRIORITY_LABEL[priority]}`,
         ),
       )
 
       try {
-        // updateTicketStatus re-used for priority via a future endpoint;
-        // for now we store the change locally and persist via ticketService if available
-        // ticketService doesn't yet expose updatePriority — keep optimistic only
-        void apiPriority // suppress unused warning
-      } catch {
-        // no-op
+        await ticketService.updateTicket(apiTicketId, { priority: apiPriority })
+        refetch()
+        if (singleTicket) {
+          setSingleTicket((prev) => prev ? { ...prev, priority } : null)
+        }
+      } catch (err) {
+        console.error("Failed to update priority", err)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ticket, apiTicketId, agentName],
+    [activeTicket, apiTicketId, agentName, singleTicket],
   )
 
   /* ---- Send reply / internal note — calls API ---- */
   const sendMessage = useCallback(
     async (text: string, internal: boolean, setWaiting: boolean) => {
-      if (!ticket || !apiTicketId) return
+      if (!activeTicket || !apiTicketId) return
 
       // Optimistic local add
       const optimisticItem: TimelineItem = {
@@ -271,12 +295,12 @@ export default function TicketInbox() {
         author:   agentName,
         initials: agentInitials,
         colour:   "bg-indigo-600",
-        role:     internal ? undefined : `to ${ticket.requester.split(" ")[0]}`,
+        role:     internal ? undefined : `to ${activeTicket.requester.split(" ")[0]}`,
         body:     text,
         time:     timeNow(),
         internal,
       }
-      addToTimeline(ticket.id, optimisticItem)
+      addToTimeline(activeTicket.id, optimisticItem)
       if (setWaiting) await setStatus("Waiting on employee")
 
       try {
@@ -284,7 +308,7 @@ export default function TicketInbox() {
         // Replace optimistic entry with the real one from the server
         setTimelines((old) => ({
           ...old,
-          [ticket.id]: (old[ticket.id] ?? []).map((item) =>
+          [activeTicket.id]: (old[activeTicket.id] ?? []).map((item) =>
             item.id === optimisticItem.id ? commentToTimeline(saved) : item,
           ),
         }))
@@ -293,7 +317,7 @@ export default function TicketInbox() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ticket, apiTicketId, agentName, agentInitials, setStatus],
+    [activeTicket, apiTicketId, agentName, agentInitials, setStatus],
   )
 
   /* ---- Render ---- */
@@ -309,11 +333,11 @@ export default function TicketInbox() {
         loading={listLoading}
       />
 
-      {ticket ? (
+      {activeTicket ? (
         <>
           <TicketConversationPane
-            ticket={ticket}
-            timeline={timelines[ticket.id] ?? []}
+            ticket={activeTicket}
+            timeline={timelines[activeTicket.id] ?? []}
             commentsLoading={commentsLoading}
             agentName={agentName}
             agentInitials={agentInitials}
@@ -321,10 +345,9 @@ export default function TicketInbox() {
             onSend={sendMessage}
           />
           <TicketPropertiesPane
-            ticket={ticket}
-            agentName={agentName}
-            agentInitials={agentInitials}
+            ticket={activeTicket}
             onChangePriority={changePriority}
+            onChangeStatus={setStatus}
           />
         </>
       ) : (

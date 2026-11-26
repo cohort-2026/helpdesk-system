@@ -5,7 +5,8 @@ export type TicketStatus =
   | "Pending approval"
   | "Resolved"
   | "Closed"
-  | "Cancelled";
+  | "Cancelled"
+  | "Waiting on employee";
 
 export const VALID_PRIORITIES: TicketPriority[] = ["High", "Medium", "Low"];
 export const VALID_STATUSES: TicketStatus[] = [
@@ -15,6 +16,7 @@ export const VALID_STATUSES: TicketStatus[] = [
   "Resolved",
   "Closed",
   "Cancelled",
+  "Waiting on employee",
 ];
 
 export interface TicketComment {
@@ -73,6 +75,8 @@ export interface Ticket {
   requester_email?: string | null;
   assignee_name?: string | null;
   assignee_email?: string | null;
+  step?: number;
+  extra_fields?: Record<string, any>;
   comments?: TicketComment[];
   feedback?: TicketFeedback | null;
 }
@@ -84,6 +88,8 @@ export interface CreateTicketPayload {
   department_id?: number | null;
   category_id?: number | null;
   request_type_id?: number | null;
+  step?: number;
+  extra_fields?: Record<string, any>;
 }
 
 export interface TicketFilters {
@@ -91,6 +97,7 @@ export interface TicketFilters {
   priority?: string;
   department_id?: number;
   requester_id?: string;
+  creator_id?: string;
   assignee_id?: string;
   search?: string;
   page?: number;

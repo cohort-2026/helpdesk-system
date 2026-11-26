@@ -29,6 +29,8 @@ const TICKET_SELECT_FIELDS = `
   t.ticket_status,
   t.requester_id,
   t.assignee_id,
+  t.step,
+  t.extra_fields,
   t.created_at,
   t.updated_at,
   t.deleted_at,
@@ -80,6 +82,8 @@ export const createTicket = async (dto: CreateTicketDto): Promise<Ticket> => {
     request_type_id = null,
     requester_id,
     assignee_id = null,
+    step = 0,
+    extra_fields = {},
   } = dto;
 
   const insertResult = await pool.query(
@@ -93,10 +97,12 @@ export const createTicket = async (dto: CreateTicketDto): Promise<Ticket> => {
       ticket_status,
       requester_id,
       assignee_id,
+      step,
+      extra_fields,
       created_at,
       updated_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, NOW(), NOW())
     RETURNING ticket_id`,
     [
       title,
@@ -107,7 +113,9 @@ export const createTicket = async (dto: CreateTicketDto): Promise<Ticket> => {
       priority,
       status,
       requester_id,
-      assignee_id
+      assignee_id,
+      step,
+      JSON.stringify(extra_fields || {})
     ]
   );
 
@@ -317,6 +325,14 @@ export const updateTicket = async (
     fields.push(`assignee_id = $${paramIndex++}`);
     values.push(updateData.assignee_id);
   }
+  if (updateData.step !== undefined) {
+    fields.push(`step = $${paramIndex++}`);
+    values.push(updateData.step);
+  }
+  if (updateData.extra_fields !== undefined) {
+    fields.push(`extra_fields = $${paramIndex++}::jsonb`);
+    values.push(JSON.stringify(updateData.extra_fields || {}));
+  }
 
   if (fields.length === 0) {
     return getTicketById(ticketId);
@@ -514,6 +530,7 @@ export const assignTicket = async (
       `UPDATE ticket
        SET assignee_id = $1,
            ticket_status = $2,
+           step = CASE WHEN step = 0 THEN 1 ELSE step END,
            updated_at = NOW()
        WHERE ticket_id = $3`,
       [resolvedAssigneeId, newStatus, ticketId]
@@ -989,13 +1006,13 @@ export const updateTicketStatus = async (
     return { success: false, statusCode: 404, message: "Ticket not found." };
   }
 
-  // Employees can only cancel their own tickets
+  // Employees can cancel, confirm fixed (close), or reopen (if still broken) their own tickets
   if (currentUser.role === "Employee") {
     if (String(existingTicket.requester_id) !== String(currentUser.user_id)) {
       return { success: false, statusCode: 403, message: "Forbidden: You are not authorized to update this ticket." };
     }
-    if (newStatus !== "Cancelled") {
-      return { success: false, statusCode: 403, message: "Forbidden: Employees can only cancel their own tickets." };
+    if (!["Cancelled", "Closed", "Open"].includes(newStatus)) {
+      return { success: false, statusCode: 403, message: "Forbidden: Employees can only cancel, confirm fixed (close), or reopen their own tickets." };
     }
   } else if (!isStaff) {
     return { success: false, statusCode: 403, message: "Forbidden: You do not have permission to change ticket status." };
@@ -1003,9 +1020,20 @@ export const updateTicketStatus = async (
 
   const oldStatus = existingTicket.ticket_status;
 
+  let nextStep: number | null = null;
+  switch (newStatus) {
+    case "Pending approval": nextStep = 0; break;
+    case "Open": nextStep = 2; break;
+    case "In progress": nextStep = 2; break;
+    case "Waiting on employee": nextStep = 2; break;
+    case "Resolved": nextStep = 3; break;
+    case "Closed": nextStep = 4; break;
+    case "Cancelled": nextStep = -1; break;
+  }
+
   await pool.query(
-    "UPDATE ticket SET ticket_status = $1, updated_at = NOW() WHERE ticket_id = $2",
-    [newStatus, ticketId]
+    "UPDATE ticket SET ticket_status = $1, step = COALESCE($2, step), updated_at = NOW() WHERE ticket_id = $3",
+    [newStatus, nextStep, ticketId]
   );
 
   const updatedTicket = await getTicketById(ticketId, currentUser.role, false);
