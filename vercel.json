@@ -5,7 +5,7 @@
       "root": "Backend",
       "framework": "express"
     },
-    "frontend-v2": {
+    "frontend": {
       "root": "Frontend-v2",
       "framework": "vite"
     }
